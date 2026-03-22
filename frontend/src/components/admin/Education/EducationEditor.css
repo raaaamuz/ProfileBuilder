@@ -1,0 +1,3 @@
+.transition-height {
+    transition: max-height 0.5s cubic-bezier(0.8, 0, 0.2, 1);
+}

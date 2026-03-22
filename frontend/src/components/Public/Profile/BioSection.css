@@ -1,0 +1,11 @@
+.social-reference {
+    color: #1da1f2;
+    font-weight: bold;
+    text-decoration: underline;
+    margin: 0 4px;
+  }
+  
+  .social-reference:hover {
+    color: #0d95e8;
+  }
+  

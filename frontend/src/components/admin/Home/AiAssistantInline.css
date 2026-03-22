@@ -1,0 +1,158 @@
+/* Container styles */
+.ai-assistant-inline-circle {
+    position: absolute;
+    z-index: 46;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    /* You can include additional styling or CSS variables if needed */
+  }
+  
+  /* Animation class (applied on mount) */
+  .ai-assistant-inline-withAnimation {
+    animation: showCircle 0.3s ease-out forwards;
+  }
+  
+  /* Pin element (background image) */
+  .ai-assistant-inline-pin {
+    width: 30px;
+    height: 30px;
+    background-image: url("/images/pin-5d6d515fbd00236ae187.png");
+    background-size: cover;
+    background-repeat: no-repeat;
+    opacity: 1;
+  }
+  
+  /* Inner container for icon and text */
+  .ai-assistant-inline-innerContainer {
+    display: flex;
+    align-items: center;
+    padding: 0 8px;
+  }
+  
+  /* Icon styling */
+  .ai-assistant-icon {
+    font-size: 1.5rem; /* Similar to text-lg */
+    color: #fff; /* Assuming white icon */
+  }
+  
+  /* Text styling and initial hidden state */
+  .ai-assistant-inline-text {
+    font-size: 0.75rem; /* text-xs */
+    color: #fff;
+    margin-left: 8px;
+    white-space: nowrap;
+    opacity: 0;
+    transform: translateX(10px);
+    transition: all 0.3s ease-out;
+  }
+  
+  /* When hovered, slide in the text */
+  .ai-assistant-inline-circle:hover .ai-assistant-inline-text,
+  .ai-assistant-inline-text.slide-in {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  
+  /* Optionally, when not hovered, slide out */
+  .ai-assistant-inline-text.slide-out {
+    opacity: 0;
+    transform: translateX(10px);
+  }
+  
+  /* Keyframe animation for the circle element */
+  @keyframes showCircle {
+    0% {
+      opacity: 0;
+      transform: translateX(10px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+  
+
+  .ai-assistant-inline-pin {
+    width: 30px;
+    height: 30px;
+    background-image: url("https://via.placeholder.com/30");
+    background-size: cover;
+    background-repeat: no-repeat;
+    opacity: 1;
+  }
+  
+  .admin-home-container {
+    --primary-color: #4f46e5;
+    --primary-hover: #4338ca;
+    --sidebar-width: 250px;
+    height: 100vh;
+    overflow: hidden; /* Prevent double scrollbars */
+  }
+  
+  .admin-content-wrapper {
+    display: flex;
+    height: 100vh;
+  }
+  
+  .admin-sidebar {
+    width: var(--sidebar-width);
+    background: #1e293b;
+    color: white;
+    padding: 1.5rem 0;
+    height: 100vh;
+    position: fixed;
+    overflow-y: auto; /* Allow sidebar to scroll if needed */
+  }
+  
+  .admin-main-content {
+    flex: 1;
+    margin-left: var(--sidebar-width);
+    height: 100vh;
+    overflow: hidden; /* Prevent main content from scrolling */
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .content-wrapper {
+    padding: 2rem;
+    overflow-y: auto; /* Only this container scrolls */
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .admin-form {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    flex: 1; /* Take remaining space */
+    min-height: 0; /* Fix for flexbox scrolling */
+    overflow-y: auto; /* Allow form to scroll if needed */
+  }
+  
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .admin-content-wrapper {
+      flex-direction: column;
+      height: auto;
+    }
+    
+    .admin-sidebar {
+      width: 100%;
+      height: auto;
+      position: relative;
+      padding: 1rem 0;
+    }
+    
+    .admin-main-content {
+      margin-left: 0;
+      height: auto;
+    }
+    
+    .content-wrapper {
+      padding: 1.5rem;
+    }
+  }

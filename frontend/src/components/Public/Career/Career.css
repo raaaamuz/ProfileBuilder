@@ -1,0 +1,19 @@
+.custom-list ul {
+    list-style: disc;
+    padding-left: 1.5rem;
+  }
+  .custom-list li {
+    margin-bottom: 0.5rem;
+  }
+  
+
+  .timeline::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 8.5rem; /* Adjust according to your layout */
+    width: 2px;
+    background-color: #cbd5e1; /* Tailwind's slate-300 */
+  }
+  

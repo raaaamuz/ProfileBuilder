@@ -1,0 +1,163 @@
+/* Theme CSS Variables - These are set dynamically by ThemeContext */
+:root {
+  /* Default Light Theme */
+  --color-primary: #3b82f6;
+  --color-primaryHover: #2563eb;
+  --color-secondary: #6b7280;
+  --color-accent: #f59e0b;
+  --color-background: #ffffff;
+  --color-backgroundAlt: #f3f4f6;
+  --color-surface: #ffffff;
+  --color-surfaceHover: #f9fafb;
+  --color-text: #1f2937;
+  --color-textMuted: #6b7280;
+  --color-textLight: #9ca3af;
+  --color-border: #e5e7eb;
+  --color-borderLight: #f3f4f6;
+  --color-success: #22c55e;
+  --color-error: #ef4444;
+  --color-warning: #f59e0b;
+  --color-cardBg: #ffffff;
+  --color-sidebarBg: #1f2937;
+  --color-sidebarText: #ffffff;
+  --color-sidebarHover: #374151;
+
+  --font-primary: 'Inter', system-ui, sans-serif;
+  --font-heading: 'Inter', system-ui, sans-serif;
+}
+
+/* Apply theme to body */
+body {
+  background-color: var(--color-background);
+  color: var(--color-text);
+  font-family: var(--font-primary);
+}
+
+/* Themed utility classes */
+.themed-bg {
+  background-color: var(--color-background);
+}
+
+.themed-bg-alt {
+  background-color: var(--color-backgroundAlt);
+}
+
+.themed-bg-surface {
+  background-color: var(--color-surface);
+}
+
+.themed-bg-card {
+  background-color: var(--color-cardBg);
+}
+
+.themed-bg-primary {
+  background-color: var(--color-primary);
+}
+
+.themed-bg-sidebar {
+  background-color: var(--color-sidebarBg);
+}
+
+.themed-text {
+  color: var(--color-text);
+}
+
+.themed-text-muted {
+  color: var(--color-textMuted);
+}
+
+.themed-text-light {
+  color: var(--color-textLight);
+}
+
+.themed-text-primary {
+  color: var(--color-primary);
+}
+
+.themed-text-sidebar {
+  color: var(--color-sidebarText);
+}
+
+.themed-border {
+  border-color: var(--color-border);
+}
+
+.themed-border-light {
+  border-color: var(--color-borderLight);
+}
+
+/* Themed button */
+.themed-btn-primary {
+  background-color: var(--color-primary);
+  color: white;
+  transition: background-color 0.2s;
+}
+
+.themed-btn-primary:hover {
+  background-color: var(--color-primaryHover);
+}
+
+/* Themed card */
+.themed-card {
+  background-color: var(--color-cardBg);
+  border: 1px solid var(--color-border);
+  border-radius: 1rem;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+}
+
+/* Themed sidebar */
+.themed-sidebar {
+  background-color: var(--color-sidebarBg);
+  color: var(--color-sidebarText);
+}
+
+.themed-sidebar-item:hover {
+  background-color: var(--color-sidebarHover);
+}
+
+/* Themed input */
+.themed-input {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+}
+
+.themed-input:focus {
+  border-color: var(--color-primary);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.themed-input::placeholder {
+  color: var(--color-textLight);
+}
+
+/* Status colors */
+.themed-success {
+  color: var(--color-success);
+}
+
+.themed-error {
+  color: var(--color-error);
+}
+
+.themed-warning {
+  color: var(--color-warning);
+}
+
+.themed-bg-success {
+  background-color: var(--color-success);
+}
+
+.themed-bg-error {
+  background-color: var(--color-error);
+}
+
+.themed-bg-warning {
+  background-color: var(--color-warning);
+}
+
+/* Transitions */
+.theme-transition {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}

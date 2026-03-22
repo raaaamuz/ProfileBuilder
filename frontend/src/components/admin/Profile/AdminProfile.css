@@ -1,0 +1,145 @@
+.user-profile-form-container {
+  background: linear-gradient(135deg, #ffffff 0%, #ffffff 100%);
+  border-radius: 12px;
+  padding: 20px;
+  max-width: 800px;
+  border-color: black;
+  margin: 2rem auto;
+  box-shadow: 0 10px 30px rgba(230, 219, 219, 0.1);
+  border: 2px solid #82a1f7;
+}
+
+.form-title {
+  font-size: 2rem;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 20px;
+  color: #333;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.user-profile-form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group label {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #555;
+  margin-bottom: 5px;
+}
+
+.form-input,
+.form-textarea,
+.form-input-file {
+  border: 2px solid #82a1f7;
+  border-radius: 8px;
+  padding: 10px 15px;
+  font-size: 1rem;
+  transition: border-color 0.3s ease;
+  background-color: rgb(215, 231, 243);
+  font-family: Georgia, 'Times New Roman', Times, serif;
+}
+
+.form-input:focus,
+.form-textarea:focus {
+  border-color: #ced9e6;
+  outline: none;
+}
+
+.form-textarea {
+  resize: vertical;
+}
+
+.form-textarea::placeholder {
+  color: #aaa;
+}
+
+.form-input-file {
+  cursor: pointer;
+}
+
+.profile-picture-preview {
+  margin-top: 10px;
+  max-width: 150px;
+  border-radius: 8px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.cv-preview {
+  margin-top: 10px;
+  font-size: 0.9rem;
+  color: #777;
+}
+
+.bio-preview {
+  margin-top: 20px;
+}
+
+.bio-preview h4 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 10px;
+}
+
+.parsed-bio {
+  padding: 10px;
+  border: 2px solid #eee;
+  border-radius: 8px;
+  background-color: #fafafa;
+  color: #444;
+}
+
+.custom-context-menu {
+  background: #fff;
+  border: 1px solid #ccc;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  overflow: hidden;
+  z-index: 1000;
+}
+
+.context-menu-item {
+  padding: 10px 15px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.context-menu-item:hover {
+  background-color: #f0f0f0;
+}
+
+.disabled-input {
+  background-color: #f9f9f9;
+  cursor: not-allowed;
+}
+
+.submit-button {
+  background: linear-gradient(135deg, #4a90e2 0%, #007aff 100%);
+  color: #fff;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.submit-button:hover {
+  background: linear-gradient(135deg, #007aff 0%, #005bb5 100%);
+}
+
+.success-message {
+  margin-top: 15px;
+  font-size: 1rem;
+  color: #28a745;
+  text-align: center;
+}

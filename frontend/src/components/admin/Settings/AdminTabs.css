@@ -1,0 +1,42 @@
+:root {
+    --admin-bg-color: #343a40;
+    --admin-text-color: #ffffff;
+    --admin-hover-bg-color: #495057;
+    --admin-active-bg-color: #007bff;
+    --admin-tooltip-bg-color: #6c757d;
+    --admin-logout-bg-color: #dc3545;
+    --admin-logout-hover-bg-color: #c82333;
+  }
+  
+  .admin-sidebar {
+    background-color: var(--admin-bg-color);
+    color: var(--admin-text-color);
+  }
+  
+  .admin-title {
+    border-color: var(--admin-hover-bg-color);
+  }
+  
+  .admin-tab:hover {
+    background-color: var(--admin-hover-bg-color) !important;
+  }
+  
+  .admin-tab.bg-primary {
+    background-color: var(--admin-active-bg-color) !important;
+  }
+  
+  .admin-tooltip {
+    background-color: var(--admin-tooltip-bg-color);
+  }
+  
+  .admin-logout {
+    background-color: var(--admin-logout-bg-color);
+  }
+  
+  .admin-logout:hover {
+    background-color: var(--admin-logout-hover-bg-color) !important;
+  }
+  
+  .admin-content {
+    margin-left: 5rem; /* Adjusted for sidebar width */
+  }

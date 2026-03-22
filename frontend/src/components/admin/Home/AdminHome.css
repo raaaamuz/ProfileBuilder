@@ -1,0 +1,392 @@
+/* AdminHome.css */
+:root { /* Define CSS variables in :root for global scope */
+  --primary-color: #4f46e5;
+  --primary-hover: #4338ca;
+  --success-color: #10b981;
+  --error-color: #ef4444;
+  --text-color: #374151;
+  --light-gray: #f3f4f6;
+  --medium-gray: #e5e7eb;
+  --dark-gray: #6b7280;
+  --sidebar-width: 250px;
+  --header-height: 80px; /* Estimate header height */
+  --actions-height: 70px; /* Estimate actions height */
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: 'Inter', sans-serif; /* Ensure font is applied globally */
+}
+
+#root { /* Assuming your React app mounts to an element with id="root" */
+  height: 100%;
+}
+
+.admin-home-container {
+  height: 100%;
+  display: flex; /* Changed: Make container flex */
+  /* Removed font-family from here, moved to body/html */
+}
+
+.admin-sidebar {
+  width: var(--sidebar-width);
+  background: #1e293b;
+  color: white;
+  padding: 1.5rem 0;
+  position: fixed;
+  left: 0;
+  top: 0;
+  height: 100vh;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  margin-top: 100px; /* ✅ This adds top margin */
+}
+
+.sidebar-header {
+  padding: 0 1.5rem 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  flex-shrink: 0; /* Prevent shrinking */
+}
+
+.sidebar-header h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.sidebar-nav {
+  flex-grow: 1; /* Allow nav to take remaining space */
+  overflow-y: auto; /* Scroll nav if it gets too long */
+}
+
+.sidebar-nav ul {
+  list-style: none;
+  padding: 0;
+  margin: 1rem 0;
+}
+
+.sidebar-nav li {
+  padding: 0.75rem 1.5rem;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.95rem;
+  white-space: nowrap; /* Prevent text wrapping in sidebar items */
+}
+
+.sidebar-nav li:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.sidebar-nav li.active {
+  background: var(--primary-color);
+  border-left: 4px solid white;
+  padding-left: calc(1.5rem - 4px); /* Adjust padding for border */
+}
+
+.sidebar-nav li svg {
+  margin-right: 0.75rem;
+  flex-shrink: 0; /* Prevent icon shrinking */
+}
+
+/* --- Main Content Area Modifications --- */
+.admin-main-content {
+  flex: 1; /* Take remaining width */
+  margin-left: var(--sidebar-width); /* Offset for fixed sidebar */
+  padding: 0; /* Remove padding, apply to inner elements */
+  background: var(--light-gray);
+  height: 100vh; /* Full viewport height */
+  display: flex; /* Use flexbox */
+  flex-direction: column; /* Stack header, form, actions vertically */
+  overflow: hidden; /* Prevent this container from scrolling */
+  box-sizing: border-box; /* Include padding/border in element's total width/height */
+}
+
+/* Renamed .admin-header to .content-header for clarity */
+.content-header { /* Style the header within main content */
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 2rem; /* Add padding here */
+  border-bottom: 1px solid var(--medium-gray);
+  background: white; /* Give header a background */
+  flex-shrink: 0; /* Prevent header from shrinking */
+  box-sizing: border-box;
+  min-height: var(--header-height); /* Ensure minimum height */
+}
+
+.content-header h1 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+}
+
+.success-message {
+  display: flex;
+  align-items: center;
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--success-color);
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+}
+
+.admin-form {
+  flex: 1; /* Allow form to grow and take available space */
+  background: white;
+  /* Removed border-radius and box-shadow to make it look integrated */
+  padding: 1rem; /* Padding for form content */
+  overflow-y: auto; /* Enable vertical scrolling *within* the form area */
+  box-sizing: border-box;
+  /* Calculate max height if needed, but flex: 1 should handle it */
+  /* max-height: calc(100vh - var(--header-height) - var(--actions-height)); */
+  width: 70vh;
+  
+}
+
+/* --- Form Actions Modifications --- */
+.form-actions {
+  /* Removed margin-top and border-top */
+  padding: 1rem 2rem; /* Padding for actions area */
+  background: white; /* Match header background */
+  border-top: 1px solid var(--medium-gray); /* Add border back */
+  display: flex;
+  justify-content: flex-end;
+  flex-shrink: 0; /* Prevent actions area from shrinking */
+  box-sizing: border-box;
+  min-height: var(--actions-height); /* Ensure minimum height */
+}
+
+.save-button {
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.save-button:hover:not(:disabled) { /* Add :not(:disabled) */
+  background: var(--primary-hover);
+}
+
+.save-button:disabled {
+  background: var(--dark-gray);
+  cursor: not-allowed;
+  opacity: 0.7; /* Add opacity for disabled state */
+}
+
+.spinner {
+  display: inline-block;
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-right: 0.5rem;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* --- Style for File Name Display --- */
+.file-name-display {
+  display: block; /* Or inline-block */
+  margin-top: 0.5rem; /* Add some space above */
+  font-size: 0.875rem;
+  color: var(--dark-gray);
+  word-wrap: break-word; /* Deprecated but good fallback */
+  overflow-wrap: break-word; /* Standard property */
+  white-space: normal; /* Allow wrapping */
+  max-width: 100%; /* Prevent overflow */
+  line-height: 1.4; /* Improve readability for wrapped text */
+}
+
+
+/* --- Modal Styles (Keep As Is) --- */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50; /* Ensure modal is above sidebar */
+}
+
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.modal-container {
+  background: white;
+  border-radius: 12px;
+  width: 90%; /* Use percentage for better responsiveness */
+  max-width: 600px;
+  max-height: 85vh; /* Adjust max height */
+  overflow: hidden; /* Prevent container scroll */
+  display: flex; /* Use flex for modal layout */
+  flex-direction: column; /* Stack title, content, actions */
+  z-index: 60; /* Ensure modal content is above backdrop */
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.modal-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--medium-gray);
+  margin: 0;
+  flex-shrink: 0; /* Prevent shrinking */
+}
+
+.modal-content {
+  padding: 1.5rem;
+  overflow-y: auto; /* Allow content scrolling */
+  flex-grow: 1; /* Allow content to take available space */
+}
+
+.description-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.description-item {
+  padding: 1rem;
+  border: 1px solid var(--medium-gray);
+  border-radius: 8px;
+  margin-bottom: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  line-height: 1.5; /* Improve readability */
+}
+
+.description-item:hover {
+  background: var(--light-gray);
+  border-color: var(--primary-color);
+}
+
+.modal-actions {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--medium-gray);
+  display: flex;
+  justify-content: flex-end;
+  flex-shrink: 0; /* Prevent shrinking */
+}
+
+.cancel-button {
+  background: white;
+  color: var(--text-color);
+  border: 1px solid var(--medium-gray);
+  padding: 0.5rem 1.25rem;
+  border-radius: 6px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.cancel-button:hover {
+  background: var(--light-gray);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .admin-home-container {
+     flex-direction: column; /* Stack sidebar and content */
+     height: auto; /* Allow container to grow */
+     min-height: 100vh; /* Ensure it still takes full height if content is short */
+  }
+  .admin-sidebar {
+    width: 100%; /* Full width */
+    height: auto; /* Auto height */
+    position: relative; /* Change from fixed */
+    padding: 1rem 0;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1); /* Bottom shadow */
+    z-index: 5; /* Lower z-index than modal */
+    padding-top: 10px;
+    margin-top: 10px !important; /* Adjusted from 20px to 10px */
+  }
+  
+
+  .sidebar-header {
+    padding: 0 1rem 1rem; /* Adjust padding */
+  }
+
+  .sidebar-nav {
+    overflow-y: visible; /* Remove scroll */
+    flex-grow: 0; /* Don't grow */
+  }
+
+  .sidebar-nav ul {
+    display: flex; /* Horizontal layout */
+    overflow-x: auto; /* Allow horizontal scrolling for tabs */
+    margin: 0;
+    padding: 0 1rem; /* Add horizontal padding */
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding-top: 0.5rem;
+  }
+
+  .sidebar-nav li {
+    white-space: nowrap; /* Keep items on one line */
+    padding: 0.75rem 1rem; /* Adjust padding */
+    border-left: none; /* Remove left border */
+    border-bottom: 4px solid transparent; /* Prepare for active state */
+  }
+
+  .sidebar-nav li.active {
+    background: transparent; /* Remove background */
+    border-left: none;
+    padding-left: 1rem; /* Reset padding */
+    border-bottom: 4px solid var(--primary-color); /* Use bottom border */
+    color: var(--primary-color); /* Change text color */
+    background-color: #f0f0f0; /* Slight background for active tab */
+
+  }
+   .sidebar-nav li.active svg {
+      color: var(--primary-color); /* Ensure icon color matches */
+   }
+
+  .admin-main-content {
+    margin-left: 0; /* Remove margin */
+    height: auto; /* Auto height */
+    min-height: calc(100vh - 100px); /* Rough estimate for remaining height */
+    /* overflow: visible; Remove overflow hidden */
+  }
+
+  .content-header, .admin-form, .form-actions {
+      padding-left: 1rem; /* Adjust padding for smaller screens */
+      padding-right: 1rem;
+  }
+
+  .admin-form {
+    overflow-y: visible; /* Remove internal scroll on mobile, let page scroll */
+    flex: 1 1 auto; /* Allow form to grow/shrink naturally */
+  }
+
+  .modal-container {
+    width: 95%; /* Slightly wider on mobile */
+    max-height: 90vh;
+  }
+}
