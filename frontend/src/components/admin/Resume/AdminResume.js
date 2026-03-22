@@ -299,6 +299,10 @@ const DynamicLayoutPreview = ({ sidebarSections, mainSections, templateId }) => 
   const enabledMain = mainSections.filter(s => s.enabled);
   const allSections = [...enabledSidebar, ...enabledMain];
 
+  // Debug: log what sections are in each column
+  console.log('[DynamicLayoutPreview] Sidebar sections:', sidebarSections.map(s => `${s.key}(${s.enabled})`).join(', '));
+  console.log('[DynamicLayoutPreview] Main sections:', mainSections.map(s => `${s.key}(${s.enabled})`).join(', '));
+
   // Get template colors and layout
   const template = resumeTemplates.find(t => t.id === templateId) || resumeTemplates[0];
   const colors = template.colors;
@@ -670,8 +674,8 @@ const StylePreviewMini = ({ sectionKey, styleId }) => {
 };
 
 // Sortable Section Item with style dropdown
-const SortableSectionItem = ({ section, isEnabled, onToggle, onStyleChange, styleOptions, compact = false }) => {
-  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: section.key });
+const SortableSectionItem = ({ section, isEnabled, onToggle, onStyleChange, styleOptions, compact = false, sortableId }) => {
+  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: sortableId || section.key });
   const style = { transform: CSS.Transform.toString(transform), transition };
   const Icon = section.icon;
   const [showStyles, setShowStyles] = useState(false);
@@ -1523,25 +1527,37 @@ const AdminResume = () => {
 
   // Initialize sections with lazy initializer (runs only once)
   const [sidebarSections, setSidebarSections] = useState(() => {
-    if (savedLayout?.sidebar) {
-      console.log('[Resume Layout] Loaded sidebar from localStorage:', savedLayout.sidebar);
-      return savedLayout.sidebar.map(s => ({
-        ...s,
-        icon: sectionIcons[s.key],
-        label: sectionLabels[s.key],
-      }));
+    try {
+      if (savedLayout?.sidebar && Array.isArray(savedLayout.sidebar)) {
+        console.log('[Resume Layout] Loaded sidebar from localStorage:', savedLayout.sidebar);
+        return savedLayout.sidebar
+          .filter(s => s && s.key && sectionIcons[s.key])
+          .map(s => ({
+            ...s,
+            icon: sectionIcons[s.key],
+            label: sectionLabels[s.key] || s.key,
+          }));
+      }
+    } catch (e) {
+      console.error('Error initializing sidebar:', e);
     }
     return defaultSidebarSections.map(s => ({ ...s, icon: sectionIcons[s.key], label: sectionLabels[s.key] }));
   });
 
   const [mainSections, setMainSections] = useState(() => {
-    if (savedLayout?.main) {
-      console.log('[Resume Layout] Loaded main from localStorage:', savedLayout.main);
-      return savedLayout.main.map(s => ({
-        ...s,
-        icon: sectionIcons[s.key],
-        label: sectionLabels[s.key],
-      }));
+    try {
+      if (savedLayout?.main && Array.isArray(savedLayout.main)) {
+        console.log('[Resume Layout] Loaded main from localStorage:', savedLayout.main);
+        return savedLayout.main
+          .filter(s => s && s.key && sectionIcons[s.key])
+          .map(s => ({
+            ...s,
+            icon: sectionIcons[s.key],
+            label: sectionLabels[s.key] || s.key,
+          }));
+      }
+    } catch (e) {
+      console.error('Error initializing main sections:', e);
     }
     return defaultMainSections.map(s => ({ ...s, icon: sectionIcons[s.key], label: sectionLabels[s.key] }));
   });
@@ -1902,7 +1918,13 @@ const AdminResume = () => {
       sidebarKeys.forEach(key => {
         const el = sectionElements[key];
         if (el && !sidebarContainer.contains(el)) {
-          sidebarContainer.appendChild(el);
+          try {
+            if (!el.contains(sidebarContainer)) {
+              sidebarContainer.appendChild(el);
+            }
+          } catch (e) {
+            console.warn('Could not move to sidebar:', e);
+          }
         }
       });
 
@@ -1910,7 +1932,13 @@ const AdminResume = () => {
       mainKeys.forEach(key => {
         const el = sectionElements[key];
         if (el && !mainContainer.contains(el)) {
-          mainContainer.appendChild(el);
+          try {
+            if (!el.contains(mainContainer)) {
+              mainContainer.appendChild(el);
+            }
+          } catch (e) {
+            console.warn('Could not move to main:', e);
+          }
         }
       });
 
@@ -1918,7 +1946,13 @@ const AdminResume = () => {
       sidebarSections.filter(s => s.enabled).forEach(section => {
         const el = sectionElements[section.key];
         if (el && sidebarContainer.contains(el)) {
-          sidebarContainer.appendChild(el);
+          try {
+            if (!el.contains(sidebarContainer)) {
+              sidebarContainer.appendChild(el);
+            }
+          } catch (e) {
+            console.warn('Could not reorder sidebar section:', e);
+          }
         }
       });
 
@@ -1926,12 +1960,41 @@ const AdminResume = () => {
       mainSections.filter(s => s.enabled).forEach(section => {
         const el = sectionElements[section.key];
         if (el && mainContainer.contains(el)) {
-          mainContainer.appendChild(el);
+          try {
+            if (!el.contains(mainContainer)) {
+              mainContainer.appendChild(el);
+            }
+          } catch (e) {
+            console.warn('Could not reorder main section:', e);
+          }
         }
       });
     }
 
     return doc.documentElement.outerHTML;
+  };
+
+  // Apply layout changes to HTML and save without regeneration
+  const handleSaveLayoutChanges = async () => {
+    if (!resumeHtml) return;
+
+    try {
+      // Apply section reordering and visibility to current HTML
+      const modifiedHtml = processResumeForDownload(resumeHtml);
+
+      // Save to backend
+      await api.put('/profile/resume/update/', {
+        resume_html: modifiedHtml
+      });
+
+      // Update local state
+      setResumeHtml(modifiedHtml);
+      if (updateResumeData) updateResumeData(modifiedHtml);
+
+      console.log('[Resume] Layout changes saved successfully');
+    } catch (error) {
+      console.error('Error saving layout changes:', error);
+    }
   };
 
   const handleDownloadPDF = async () => {
@@ -2006,6 +2069,10 @@ const AdminResume = () => {
       }
 
       const printWindow = window.open('', '_blank');
+      if (!printWindow) {
+        alert("Please allow popups for this site to download your resume as PDF.");
+        return;
+      }
       printWindow.document.write(html);
       printWindow.document.close();
 
@@ -2021,7 +2088,7 @@ const AdminResume = () => {
       }, 500);
     } catch (error) {
       console.error("Error downloading PDF:", error);
-      alert("Error generating PDF.");
+      alert("Error generating PDF. Please make sure popups are allowed.");
     }
   };
 
@@ -2107,14 +2174,9 @@ const AdminResume = () => {
                 <h3 className="font-semibold text-green-800">Resume Active</h3>
                 <p className="text-sm text-green-600">Visitors can download from your profile</p>
               </div>
-              <div className="flex gap-2">
-                <button onClick={handleDownloadPDF} className="px-3 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:opacity-90 flex items-center gap-2 shadow-md text-sm">
-                  <Download size={14} /> PDF
-                </button>
-                <button onClick={handleDownloadDocx} className="px-3 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-lg hover:opacity-90 flex items-center gap-2 shadow-md text-sm">
-                  <FileText size={14} /> DOCX
-                </button>
-              </div>
+              <button onClick={handleDownloadPDF} className="px-3 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:opacity-90 flex items-center gap-2 shadow-md text-sm">
+                <Download size={14} /> PDF
+              </button>
             </div>
           </div>
         </div>
@@ -2135,58 +2197,6 @@ const AdminResume = () => {
               <Settings size={18} />
               Builder
             </button>
-            <button
-              onClick={() => setActiveTab('edit')}
-              className={`px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-all ${
-                activeTab === 'edit'
-                  ? 'bg-emerald-600 text-white'
-                  : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-              }`}
-            >
-              <Pencil size={18} />
-              Edit Resume
-            </button>
-          </div>
-        )}
-
-        {/* Edit Resume Tab */}
-        {activeTab === 'edit' && resumeHtml && (
-          <div className="space-y-4">
-            <div className="bg-slate-800 rounded-2xl p-5 shadow-lg border border-slate-600">
-              <h3 className="font-bold text-lg mb-3 flex items-center gap-2 text-[#d4a853]">
-                <Pencil size={20} /> Edit Your Resume
-              </h3>
-              <p className="text-sm text-slate-400 mb-4">
-                Edit each section below. Toggle visibility with the eye icon. Click section headers to expand/collapse.
-              </p>
-              {resumeData ? (
-                <StructuredResumeEditor
-                  resumeData={resumeData}
-                  onSave={async (sectionData) => {
-                    try {
-                      // Save each section's data to the respective APIs
-                      const savePromises = [];
-
-                      // Save skills
-                      if (sectionData.skills?.visible !== false) {
-                        // Skills are updated individually, regenerate resume to apply
-                      }
-
-                      // For now, regenerate resume with updated visibility
-                      alert("Changes noted! Click 'Regenerate Resume' in the preview panel to apply changes to your resume.");
-                    } catch (error) {
-                      console.error("Error saving:", error);
-                      alert("Error saving changes");
-                    }
-                  }}
-                />
-              ) : (
-                <div className="flex items-center justify-center py-12">
-                  <Loader2 className="animate-spin text-emerald-500" size={32} />
-                  <span className="ml-3 text-slate-400">Loading your resume data...</span>
-                </div>
-              )}
-            </div>
           </div>
         )}
 
@@ -2257,7 +2267,10 @@ const AdminResume = () => {
                       </div>
                     </div>
                     <button
-                      onClick={() => setShowResumeLayoutModal(false)}
+                      onClick={() => {
+                        handleSaveLayoutChanges();
+                        setShowResumeLayoutModal(false);
+                      }}
                       className="p-2 hover:bg-white/10 rounded-lg transition-colors text-white"
                     >
                       ✕
@@ -2277,42 +2290,47 @@ const AdminResume = () => {
                         const { active, over } = event;
                         if (!over) return;
 
-                        const activeId = active.id;
-                        const overId = over.id;
+                        const activeId = String(active.id);
+                        const overId = String(over.id);
 
-                        const isActiveInSidebar = sidebarSections.some(s => s.key === activeId);
-                        const isActiveInMain = mainSections.some(s => s.key === activeId);
+                        // Extract the actual key from prefixed IDs (e.g., "sidebar-skills" -> "skills")
+                        const getKey = (id) => id.replace(/^(sidebar-|main-)/, '');
+                        const activeKey = getKey(activeId);
+                        const overKey = getKey(overId);
+
+                        const isActiveInSidebar = activeId.startsWith('sidebar-');
+                        const isActiveInMain = activeId.startsWith('main-');
 
                         const isOverSidebarContainer = overId === 'sidebar-container';
                         const isOverMainContainer = overId === 'main-container';
-                        const isOverSidebarItem = sidebarSections.some(s => s.key === overId);
-                        const isOverMainItem = mainSections.some(s => s.key === overId);
+                        const isOverSidebarItem = overId.startsWith('sidebar-') && overId !== 'sidebar-container';
+                        const isOverMainItem = overId.startsWith('main-') && overId !== 'main-container';
 
                         const activeSection = isActiveInSidebar
-                          ? sidebarSections.find(s => s.key === activeId)
-                          : mainSections.find(s => s.key === activeId);
+                          ? sidebarSections.find(s => s.key === activeKey)
+                          : mainSections.find(s => s.key === activeKey);
 
                         if (!activeSection) return;
 
                         if (isActiveInSidebar && isOverSidebarItem) {
                           setSidebarSections((items) => {
-                            const oldIndex = items.findIndex((i) => i.key === activeId);
-                            const newIndex = items.findIndex((i) => i.key === overId);
+                            const oldIndex = items.findIndex((i) => i.key === activeKey);
+                            const newIndex = items.findIndex((i) => i.key === overKey);
                             return arrayMove(items, oldIndex, newIndex);
                           });
                         }
                         else if (isActiveInMain && isOverMainItem) {
                           setMainSections((items) => {
-                            const oldIndex = items.findIndex((i) => i.key === activeId);
-                            const newIndex = items.findIndex((i) => i.key === overId);
+                            const oldIndex = items.findIndex((i) => i.key === activeKey);
+                            const newIndex = items.findIndex((i) => i.key === overKey);
                             return arrayMove(items, oldIndex, newIndex);
                           });
                         }
                         else if (isActiveInSidebar && (isOverMainContainer || isOverMainItem)) {
-                          setSidebarSections(prev => prev.filter(s => s.key !== activeId));
+                          setSidebarSections(prev => prev.filter(s => s.key !== activeKey));
                           setMainSections(prev => {
                             if (isOverMainItem) {
-                              const overIndex = prev.findIndex(s => s.key === overId);
+                              const overIndex = prev.findIndex(s => s.key === overKey);
                               const newItems = [...prev];
                               newItems.splice(overIndex, 0, activeSection);
                               return newItems;
@@ -2321,10 +2339,10 @@ const AdminResume = () => {
                           });
                         }
                         else if (isActiveInMain && (isOverSidebarContainer || isOverSidebarItem)) {
-                          setMainSections(prev => prev.filter(s => s.key !== activeId));
+                          setMainSections(prev => prev.filter(s => s.key !== activeKey));
                           setSidebarSections(prev => {
                             if (isOverSidebarItem) {
-                              const overIndex = prev.findIndex(s => s.key === overId);
+                              const overIndex = prev.findIndex(s => s.key === overKey);
                               const newItems = [...prev];
                               newItems.splice(overIndex, 0, activeSection);
                               return newItems;
@@ -2339,11 +2357,12 @@ const AdminResume = () => {
                       <div className="w-1/3">
                         <DroppableColumn id="sidebar-container" className="bg-slate-800 rounded-lg p-3 h-full min-h-[200px]">
                           <h4 className="text-xs font-bold text-slate-300 mb-2 uppercase tracking-wide">Sidebar</h4>
-                          <SortableContext items={sidebarSections.map(s => s.key)} strategy={verticalListSortingStrategy}>
+                          <SortableContext items={sidebarSections.map(s => `sidebar-${s.key}`)} strategy={verticalListSortingStrategy}>
                             <div className="space-y-2">
                               {sidebarSections.map((section) => (
                                 <SortableSectionItem
                                   key={section.key}
+                                  sortableId={`sidebar-${section.key}`}
                                   section={section}
                                   isEnabled={section.enabled}
                                   compact={true}
@@ -2378,11 +2397,12 @@ const AdminResume = () => {
                       <div className="w-2/3">
                         <DroppableColumn id="main-container" className="bg-gray-50 rounded-lg p-3 border border-gray-200 min-h-[200px]">
                           <h4 className="text-xs font-bold text-gray-500 mb-2 uppercase tracking-wide">Main Content</h4>
-                          <SortableContext items={mainSections.map(s => s.key)} strategy={verticalListSortingStrategy}>
+                          <SortableContext items={mainSections.map(s => `main-${s.key}`)} strategy={verticalListSortingStrategy}>
                             <div className="space-y-2">
                               {mainSections.map((section) => (
                                 <SortableSectionItem
                                   key={section.key}
+                                  sortableId={`main-${section.key}`}
                                   section={section}
                                   isEnabled={section.enabled}
                                   compact={true}
@@ -2452,11 +2472,11 @@ const AdminResume = () => {
                       Click to toggle visibility • Drag to reorder
                     </p>
 
-                    {/* Regenerate notice */}
+                    {/* Auto-save notice */}
                     {resumeHtml && (
-                      <div className="mt-3 p-2 bg-purple-50 border border-purple-200 rounded-lg">
-                        <p className="text-xs text-purple-700">
-                          Layout changes require regeneration. Click "Generate Resume" in the preview panel to apply changes.
+                      <div className="mt-3 p-2 bg-green-50 border border-green-200 rounded-lg">
+                        <p className="text-xs text-green-700">
+                          Layout changes are applied automatically when you close this panel.
                         </p>
                       </div>
                     )}

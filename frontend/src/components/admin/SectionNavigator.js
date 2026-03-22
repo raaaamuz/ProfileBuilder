@@ -38,17 +38,23 @@ const SectionNavigator = () => {
   const [inboxCount, setInboxCount] = useState(0);
   const [completedSections, setCompletedSections] = useState(() => {
     // Load from localStorage or start fresh
-    const saved = localStorage.getItem('onboardingProgress');
-    if (saved) {
-      return JSON.parse(saved);
+    try {
+      const saved = localStorage.getItem('onboardingProgress');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          return parsed;
+        }
+      }
+    } catch (e) {
+      console.error('Error loading onboarding progress:', e);
     }
     // First time user - only home is unlocked
     return ['home'];
   });
 
-  const [isFirstTimeUser, setIsFirstTimeUser] = useState(() => {
-    return !localStorage.getItem('onboardingComplete');
-  });
+  // Temporarily disabled onboarding - all sections unlocked
+  const [isFirstTimeUser, setIsFirstTimeUser] = useState(false);
 
   // Save progress to localStorage whenever it changes
   useEffect(() => {

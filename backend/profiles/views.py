@@ -1916,6 +1916,26 @@ def resume_html(request):
     })
 
 
+@api_view(['PUT'])
+@permission_classes([permissions.IsAuthenticated])
+def update_resume_html(request):
+    """Update the HTML content of the resume (for inline editing)"""
+    profile = get_object_or_404(UserProfile, user=request.user)
+
+    resume_html = request.data.get('resume_html')
+    if not resume_html:
+        return Response({'error': 'No resume_html provided'}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Save the updated HTML
+    profile.ai_resume_html = resume_html
+    profile.save(update_fields=['ai_resume_html'])
+
+    return Response({
+        'message': 'Resume updated successfully',
+        'resume_html': resume_html
+    })
+
+
 @api_view(['GET'])
 @permission_classes([permissions.AllowAny])
 def public_resume_html(request, username):

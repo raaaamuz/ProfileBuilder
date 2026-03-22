@@ -4,7 +4,7 @@ from .views import (
     UserProfileViewSet, get_user_profile, get_contact_info,
     resume_status, resume_generate, resume_approve, resume_download, resume_download_pdf, resume_download_docx,
     public_resume_download, resume_parse, resume_import, check_cv_status, resume_parse_existing,
-    resume_html, public_resume_html, ProfileDesignView, check_onboarding_status, upload_cv,
+    resume_html, public_resume_html, update_resume_html, ProfileDesignView, check_onboarding_status, upload_cv,
     skip_onboarding, ProfileNoteViewSet, public_profile_notes, resume_templates, resume_template_css,
     parse_cv_and_fill
 )
@@ -27,6 +27,7 @@ urlpatterns = [
     path('resume/download-pdf/', resume_download_pdf, name='resume-download-pdf'),
     path('resume/download-docx/', resume_download_docx, name='resume-download-docx'),
     path('resume/html/', resume_html, name='resume-html'),
+    path('resume/update/', update_resume_html, name='resume-update'),
     path('resume/public/<str:username>/', public_resume_download, name='public-resume-download'),
     path('resume/public/<str:username>/html/', public_resume_html, name='public-resume-html'),
     path('resume/parse/', resume_parse, name='resume-parse'),

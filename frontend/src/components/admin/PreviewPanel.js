@@ -11,7 +11,7 @@ import Blog from '../Public/Blogs/Blog';
 import CareerTimeline from '../Public/Career/CareerTimeline';
 import AwardsSection from '../Public/Profile/AwardsSection';
 
-import { Sparkles, Loader2, Check, Palette, Copy, ExternalLink, Globe, X, LayoutGrid } from 'lucide-react';
+import { Sparkles, Loader2, Check, Palette, Copy, ExternalLink, Globe, X, LayoutGrid, Edit2, Save } from 'lucide-react';
 import { SampleResumePreview, resumeTemplates as allResumeTemplates } from './Resume/ResumeTemplates';
 import BioSection from '../Public/Profile/BioSection';
 import SkillsSection from '../Public/Profile/SkillsSection';
@@ -312,6 +312,8 @@ const resumeTemplates = [
 const processResumeHtml = (html, sections) => {
   if (!html || !sections) return html;
 
+  try {
+
   // Section heading patterns to match (case insensitive)
   const sectionMatchers = {
     skills: ['SKILLS', 'Skills', 'Technical Skills', 'Core Skills', 'TECHNICAL SKILLS'],
@@ -456,6 +458,10 @@ const processResumeHtml = (html, sections) => {
   reorderSectionsInContainer(sectionElements, mainOrder, mainContainer);
 
   return doc.documentElement.outerHTML;
+  } catch (e) {
+    console.warn('Error processing resume HTML:', e);
+    return html; // Return original HTML if processing fails
+  }
 };
 
 // Helper to reorder sections within a specific container
@@ -471,7 +477,14 @@ const reorderSectionsInContainer = (sectionElements, orderedKeys, container) => 
 
   // Reorder by appending in correct order (this moves them to end in order)
   elements.forEach(el => {
-    container.appendChild(el);
+    try {
+      // Check if el contains container (would cause hierarchy error)
+      if (!el.contains(container)) {
+        container.appendChild(el);
+      }
+    } catch (e) {
+      console.warn('Could not reorder section element:', e);
+    }
   });
 };
 
@@ -482,6 +495,10 @@ const ResumePreview = ({ selectedTemplate, liveResumeHtml, liveResumeSections, o
   const [loading, setLoading] = React.useState(!liveResumeHtml);
   const [showTemplateModal, setShowTemplateModal] = React.useState(false);
   const [previewTemplate, setPreviewTemplate] = React.useState(null); // For hover preview
+  const [isEditing, setIsEditing] = React.useState(false);
+  const [editedHtml, setEditedHtml] = React.useState('');
+  const [isSaving, setIsSaving] = React.useState(false);
+  const editableRef = React.useRef(null);
 
   // Update local state when context changes (new resume generated)
   React.useEffect(() => {
@@ -534,6 +551,73 @@ const ResumePreview = ({ selectedTemplate, liveResumeHtml, liveResumeSections, o
     }
     setShowTemplateModal(false);
   };
+
+  // Handle edit mode toggle
+  const handleStartEditing = () => {
+    setEditedHtml(displayHtml);
+    setIsEditing(true);
+  };
+
+  // Handle save edited resume
+  const handleSaveEdit = async () => {
+    if (!editableRef.current) return;
+
+    setIsSaving(true);
+    try {
+      // Get the edited content from the iframe
+      const iframe = editableRef.current;
+      const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+      const editedContent = iframeDoc.documentElement.outerHTML;
+
+      // Save to backend
+      await api.put('/profile/resume/update/', {
+        resume_html: editedContent
+      });
+
+      // Update local state
+      setResumeHtml(editedContent);
+      setIsEditing(false);
+    } catch (error) {
+      console.error('Error saving resume:', error);
+      alert('Failed to save changes. Please try again.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Handle cancel editing
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+    setEditedHtml('');
+  };
+
+  // Setup contentEditable in iframe when editing
+  React.useEffect(() => {
+    if (isEditing && editableRef.current && editedHtml) {
+      const iframe = editableRef.current;
+      const setupEditing = () => {
+        try {
+          const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+          // Make body editable
+          iframeDoc.body.contentEditable = 'true';
+          iframeDoc.body.style.cursor = 'text';
+          // Add some visual feedback
+          const style = iframeDoc.createElement('style');
+          style.textContent = `
+            body { outline: none; }
+            body:focus { box-shadow: inset 0 0 0 2px rgba(212, 168, 83, 0.3); }
+            *[contenteditable]:hover { background-color: rgba(212, 168, 83, 0.1); }
+          `;
+          iframeDoc.head.appendChild(style);
+        } catch (e) {
+          console.warn('Could not setup editing:', e);
+        }
+      };
+      iframe.onload = setupEditing;
+      // Try immediately in case already loaded
+      setTimeout(setupEditing, 100);
+    }
+  }, [isEditing, editedHtml]);
 
   if (loading) {
     return (
@@ -625,27 +709,70 @@ const ResumePreview = ({ selectedTemplate, liveResumeHtml, liveResumeSections, o
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
           <div className="p-3 bg-gradient-to-r from-[#4a4a4a] to-[#3a3a3a] text-white text-sm font-semibold flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Check size={16} className="text-[#d4a853]" />
-              <span className="text-[#d4a853]">Resume Preview</span>
+              {isEditing ? (
+                <>
+                  <Edit2 size={16} className="text-[#d4a853]" />
+                  <span className="text-[#d4a853]">Editing Resume</span>
+                </>
+              ) : (
+                <>
+                  <Check size={16} className="text-[#d4a853]" />
+                  <span className="text-[#d4a853]">Resume Preview</span>
+                </>
+              )}
             </div>
             <div className="flex items-center gap-2">
-              <button
-                onClick={() => onShowLayoutModal && onShowLayoutModal()}
-                className="px-3 py-1 bg-white/20 text-white rounded-lg text-xs font-medium hover:bg-white/30 transition-colors flex items-center gap-1"
-              >
-                <LayoutGrid size={12} />
-                Layout
-              </button>
-              <button
-                onClick={() => setShowTemplateModal(true)}
-                className="px-3 py-1 bg-[#d4a853] text-[#4a4a4a] rounded-lg text-xs font-medium hover:bg-[#c49843] transition-colors flex items-center gap-1"
-              >
-                <Palette size={12} />
-                {templateInfo.name}
-              </button>
+              {isEditing ? (
+                <>
+                  <button
+                    onClick={handleCancelEdit}
+                    className="px-3 py-1 bg-white/20 text-white rounded-lg text-xs font-medium hover:bg-white/30 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleSaveEdit}
+                    disabled={isSaving}
+                    className="px-3 py-1 bg-green-500 text-white rounded-lg text-xs font-medium hover:bg-green-600 transition-colors flex items-center gap-1"
+                  >
+                    {isSaving ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />}
+                    {isSaving ? 'Saving...' : 'Save'}
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    onClick={handleStartEditing}
+                    className="px-3 py-1 bg-green-500 text-white rounded-lg text-xs font-medium hover:bg-green-600 transition-colors flex items-center gap-1"
+                  >
+                    <Edit2 size={12} />
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => onShowLayoutModal && onShowLayoutModal()}
+                    className="px-3 py-1 bg-white/20 text-white rounded-lg text-xs font-medium hover:bg-white/30 transition-colors flex items-center gap-1"
+                  >
+                    <LayoutGrid size={12} />
+                    Layout
+                  </button>
+                  <button
+                    onClick={() => setShowTemplateModal(true)}
+                    className="px-3 py-1 bg-[#d4a853] text-[#4a4a4a] rounded-lg text-xs font-medium hover:bg-[#c49843] transition-colors flex items-center gap-1"
+                  >
+                    <Palette size={12} />
+                    {templateInfo.name}
+                  </button>
+                </>
+              )}
             </div>
           </div>
-          <div style={{ height: 'calc(100vh - 200px)', minHeight: '600px', overflow: 'auto', backgroundColor: '#f3f4f6', padding: '16px' }}>
+          {isEditing && (
+            <div className="px-3 py-2 bg-yellow-50 border-b border-yellow-200 text-yellow-800 text-xs flex items-center gap-2">
+              <Edit2 size={14} />
+              Click on any text in the resume to edit it directly. Click Save when done.
+            </div>
+          )}
+          <div style={{ height: 'calc(100vh - 200px)', minHeight: '600px', overflow: 'auto', backgroundColor: isEditing ? '#fef9e7' : '#f3f4f6', padding: '16px' }}>
             <div style={{
               width: '100%',
               display: 'flex',
@@ -655,13 +782,15 @@ const ResumePreview = ({ selectedTemplate, liveResumeHtml, liveResumeSections, o
                 width: '520px',
                 height: '735px',
                 position: 'relative',
-                boxShadow: '0 8px 30px rgba(0,0,0,0.2)',
+                boxShadow: isEditing ? '0 8px 30px rgba(212, 168, 83, 0.4)' : '0 8px 30px rgba(0,0,0,0.2)',
                 borderRadius: '6px',
                 overflow: 'hidden',
-                background: 'white'
+                background: 'white',
+                border: isEditing ? '2px solid #d4a853' : 'none'
               }}>
                 <iframe
-                  srcDoc={displayHtml}
+                  ref={isEditing ? editableRef : null}
+                  srcDoc={isEditing ? editedHtml : displayHtml}
                   title="Resume Preview"
                   className="border-0"
                   style={{
