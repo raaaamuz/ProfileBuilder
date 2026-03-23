@@ -16,6 +16,7 @@ import { CSS } from "@dnd-kit/utilities";
 import api from "../../../services/api";
 import { PreviewContext } from "../PreviewContext";
 import { resumeTemplates } from "./ResumeTemplates";
+import FullPagePreviewModal from "./FullPagePreviewModal";
 
 // Sample data for dynamic preview
 const sampleData = {
@@ -1423,6 +1424,7 @@ const AdminResume = () => {
   const [editableHtml, setEditableHtml] = useState('');
   const [resumeData, setResumeData] = useState(null);
   const editorContainerRef = useRef(null);
+  const [showFullPreview, setShowFullPreview] = useState(false);
 
 
   // Section style options
@@ -2507,9 +2509,18 @@ const AdminResume = () => {
             {/* Status shown after generation */}
             {resumeHtml && !generating && (
               <div className="bg-slate-700/50 rounded-xl p-4 border border-slate-600">
-                <div className="flex items-center gap-2 text-green-400 mb-2">
-                  <Check size={18} />
-                  <span className="font-medium">Resume Generated</span>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2 text-green-400">
+                    <Check size={18} />
+                    <span className="font-medium">Resume Generated</span>
+                  </div>
+                  <button
+                    onClick={() => setShowFullPreview(true)}
+                    className="flex items-center gap-2 px-3 py-1.5 bg-purple-600 text-white text-xs font-medium rounded-lg hover:bg-purple-700 transition-colors"
+                  >
+                    <Eye size={14} />
+                    Full Preview
+                  </button>
                 </div>
                 <p className="text-xs text-slate-300">View your resume preview on the right panel. Use the Generate button there to regenerate.</p>
               </div>
@@ -2518,6 +2529,14 @@ const AdminResume = () => {
         )}
 
       </div>
+
+      {/* Full Page Preview Modal */}
+      <FullPagePreviewModal
+        isOpen={showFullPreview}
+        onClose={() => setShowFullPreview(false)}
+        resumeHtml={resumeHtml}
+        title="Resume Full Preview"
+      />
     </div>
   );
 };

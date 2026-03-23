@@ -38,7 +38,10 @@ export default function ResumeHTMLRenderer({ username }) {
             <DownloadPDFButton contentRef={resumeRef} />
           </div>
           <div ref={resumeRef} className="flex justify-center p-4">
-            <ResumeTemplate data={profileData} />
+            <ResumeTemplate
+              data={profileData}
+              template={profileData?.userProfile?.resume_template || "professional"}
+            />
           </div>
         </>
       )}

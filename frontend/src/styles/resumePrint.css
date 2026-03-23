@@ -1,0 +1,171 @@
+/**
+ * Resume Print Styles
+ * Ensures consistent PDF/print output with proper colors and layout
+ */
+
+@media print {
+  /* Force color printing */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+
+  /* Hide non-print elements */
+  .print\\:hidden,
+  .no-print,
+  button,
+  nav,
+  header:not(.resume-header),
+  footer:not(.resume-footer) {
+    display: none !important;
+  }
+
+  /* A4 page setup */
+  @page {
+    size: A4;
+    margin: 0;
+  }
+
+  /* Reset body */
+  body {
+    margin: 0;
+    padding: 0;
+    background: white !important;
+  }
+
+  /* Resume container */
+  .resume-container,
+  [data-resume] {
+    width: 210mm;
+    min-height: 297mm;
+    padding: 15mm;
+    margin: 0;
+    background: white !important;
+    box-shadow: none !important;
+  }
+
+  /* Page break control */
+  .page-break-before {
+    page-break-before: always;
+  }
+
+  .page-break-after {
+    page-break-after: always;
+  }
+
+  .avoid-break {
+    page-break-inside: avoid;
+  }
+
+  /* Section styling */
+  section,
+  .resume-section {
+    page-break-inside: avoid;
+    margin-bottom: 10mm;
+  }
+
+  /* Header styling */
+  h1 {
+    font-size: 24pt;
+    margin-bottom: 5mm;
+  }
+
+  h2 {
+    font-size: 14pt;
+    margin-bottom: 3mm;
+  }
+
+  h3 {
+    font-size: 12pt;
+    margin-bottom: 2mm;
+  }
+
+  /* Text sizing */
+  p, li, span {
+    font-size: 10pt;
+    line-height: 1.4;
+  }
+
+  /* Profile picture */
+  .profile-picture,
+  img[alt="Profile"] {
+    border-radius: 50%;
+    width: 30mm !important;
+    height: 30mm !important;
+    object-fit: cover;
+  }
+
+  /* Two-column layout */
+  .resume-two-column {
+    display: flex !important;
+    flex-direction: row !important;
+  }
+
+  .resume-sidebar {
+    width: 35% !important;
+    flex-shrink: 0;
+  }
+
+  .resume-main {
+    width: 65% !important;
+    flex-grow: 1;
+  }
+
+  /* Skills chips */
+  .skill-chip {
+    display: inline-block;
+    padding: 1mm 3mm;
+    margin: 1mm;
+    border-radius: 2mm;
+    font-size: 9pt;
+  }
+
+  /* Links */
+  a {
+    text-decoration: none;
+    color: inherit !important;
+  }
+
+  /* Preserve backgrounds */
+  [style*="background"],
+  [class*="bg-"] {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Lists */
+  ul, ol {
+    padding-left: 5mm;
+  }
+
+  li {
+    margin-bottom: 1mm;
+  }
+
+  /* Borders */
+  hr {
+    border: none;
+    border-top: 0.5pt solid #e5e7eb;
+    margin: 3mm 0;
+  }
+}
+
+/* Screen styles for print preview */
+.print-preview {
+  width: 210mm;
+  min-height: 297mm;
+  margin: 0 auto;
+  background: white;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+}
+
+/* A4 wrapper for preview */
+.a4-wrapper {
+  width: 210mm;
+  min-height: 297mm;
+  background: white;
+  margin: 0 auto;
+  padding: 15mm;
+  box-sizing: border-box;
+}
