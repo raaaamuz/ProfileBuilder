@@ -4,12 +4,13 @@ import { useParams } from 'react-router-dom';
 import { Star, Quote, User, ExternalLink } from 'lucide-react';
 import api from '../../../services/api';
 import { PreviewContext } from '../../admin/PreviewContext';
-import { getSubdomainUsername } from '../../../utils/subdomain';
+import { getSubdomainUsername, getUsernameSyncOnly } from '../../../utils/subdomain';
 
 const TestimonialsSection = ({ isAdminPreview = false, accentColor = '#6366f1' }) => {
   const { username: urlUsername } = useParams();
   const subdomainUser = getSubdomainUsername();
-  const username = urlUsername || subdomainUser;
+  const cachedCustomDomainUser = getUsernameSyncOnly();
+  const username = urlUsername || subdomainUser || cachedCustomDomainUser;
 
   const previewContext = useContext(PreviewContext);
   const [testimonials, setTestimonials] = useState([]);

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import api from '../../../services/api';
-import { getSubdomainUsername } from '../../../utils/subdomain';
+import { getSubdomainUsername, getUsernameSyncOnly } from '../../../utils/subdomain';
 import VerticalSliderLayout from './VerticalSliderLayout';
 import { PublicTemplateProvider } from '../../../context/PublicTemplateContext';
 
@@ -148,7 +148,9 @@ const FooterSection = ({ username, accentColor }) => {
 const VerticalProfilePage = () => {
   const { username: urlUsername } = useParams();
   const subdomainUser = getSubdomainUsername();
-  const username = urlUsername || subdomainUser;
+  // Also check cached custom domain username (resolved in App.js)
+  const cachedCustomDomainUser = getUsernameSyncOnly();
+  const username = urlUsername || subdomainUser || cachedCustomDomainUser;
 
   const [settings, setSettings] = useState(null);
   const [loading, setLoading] = useState(true);

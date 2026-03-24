@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { Home, User, GraduationCap, Briefcase, Wrench, Package, Trophy, Quote, Mail } from 'lucide-react';
 import api from '../../../services/api';
-import { getSubdomainUsername } from '../../../utils/subdomain';
+import { getSubdomainUsername, getUsernameSyncOnly } from '../../../utils/subdomain';
 import { PublicTemplateProvider } from '../../../context/PublicTemplateContext';
 
 // Import public-aware sections
@@ -140,7 +140,9 @@ const FooterSection = ({ username, accentColor }) => {
 const DefaultProfileLayout = () => {
   const { username: urlUsername } = useParams();
   const subdomainUser = getSubdomainUsername();
-  const username = urlUsername || subdomainUser;
+  // Also check cached custom domain username (resolved in App.js)
+  const cachedCustomDomainUser = getUsernameSyncOnly();
+  const username = urlUsername || subdomainUser || cachedCustomDomainUser;
 
   const [settings, setSettings] = useState(null);
   const [loading, setLoading] = useState(true);

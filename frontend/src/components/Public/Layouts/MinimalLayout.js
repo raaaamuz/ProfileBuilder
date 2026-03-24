@@ -1,17 +1,20 @@
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
-import { getSubdomainUsername } from '../../../utils/subdomain';
+import { getSubdomainUsername, getUsernameSyncOnly } from '../../../utils/subdomain';
 
 /**
  * MinimalLayout - Clean layout for standalone pages like Blog, Stories
  * Has a simple back button and consistent footer, no full navbar
+ * Supports: URL params, subdomains (username.profile2connect.com), and custom domains
  */
 const MinimalLayout = ({ children }) => {
   const navigate = useNavigate();
   const { username: urlUsername } = useParams();
   const subdomainUser = getSubdomainUsername();
-  const username = urlUsername || subdomainUser;
+  // Also check cached custom domain username (resolved in App.js)
+  const cachedCustomDomainUser = getUsernameSyncOnly();
+  const username = urlUsername || subdomainUser || cachedCustomDomainUser;
 
   const handleBack = () => {
     if (username) {

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation, useParams, Navigate } from 'react-router-dom';
 import Home from './components/Public/Home/Home';
 import Profile from './components/Public/Profile/Profile';
@@ -39,7 +39,7 @@ import TestimonialsSection from './components/Public/Testimonials/TestimonialsSe
 import CVUpload from './components/admin/Onboarding/CVUpload';
 import TemplateSelection from './components/admin/Onboarding/TemplateSelection';
 import AdminDashboard from './components/admin/AdminDashboard';
-import { getSubdomainUsername } from './utils/subdomain';
+import { getSubdomainUsername, isPotentialCustomDomain, fetchCustomDomainUsername } from './utils/subdomain';
 
 // Public Layout Variants
 import VerticalProfilePage from './components/Public/VerticalSlider/VerticalProfilePage';
@@ -120,12 +120,76 @@ const ProfilePageWrapper = () => {
   return <Navigate to="/login" replace />;
 };
 
+// ============================================================================
+// CUSTOM DOMAIN DETECTION
+// ============================================================================
+// This app supports three access patterns:
+// 1. Main domain (profile2connect.com) - Shows landing/login/admin
+// 2. Subdomain (username.profile2connect.com) - Shows user's public profile
+// 3. Custom domain (user's own domain) - Shows user's public profile
+// ============================================================================
+
 // Main Application
 function App() {
   const subdomainUser = getSubdomainUsername();
 
-  // If on a subdomain, show public profile routes
-  if (subdomainUser) {
+  // State for custom domain detection (async)
+  const [customDomainState, setCustomDomainState] = useState({
+    username: null,
+    loading: isPotentialCustomDomain(), // Only loading if we need to check
+    checked: false,
+  });
+
+  // Check for custom domain on mount (only if not on subdomain)
+  useEffect(() => {
+    if (subdomainUser || !isPotentialCustomDomain()) {
+      // No need to check custom domain if we're on a subdomain or known domain
+      setCustomDomainState({ username: null, loading: false, checked: true });
+      return;
+    }
+
+    // Fetch custom domain username
+    const checkCustomDomain = async () => {
+      try {
+        const username = await fetchCustomDomainUsername(window.location.hostname);
+        setCustomDomainState({ username, loading: false, checked: true });
+      } catch (error) {
+        console.error('Custom domain check failed:', error);
+        setCustomDomainState({ username: null, loading: false, checked: true });
+      }
+    };
+
+    checkCustomDomain();
+  }, [subdomainUser]);
+
+  // Show loading spinner while checking custom domain
+  if (customDomainState.loading) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        backgroundColor: '#0f172a',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}>
+        <div style={{
+          width: '3rem',
+          height: '3rem',
+          border: '4px solid rgba(255,255,255,0.1)',
+          borderTopColor: '#6366f1',
+          borderRadius: '50%',
+          animation: 'spin 1s linear infinite'
+        }} />
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
+  }
+
+  // Determine which user to show (subdomain takes priority, then custom domain)
+  const profileUser = subdomainUser || customDomainState.username;
+
+  // If on a subdomain or custom domain, show public profile routes
+  if (profileUser) {
     return (
       <ThemeProvider>
         <Router>
@@ -145,7 +209,7 @@ function App() {
               {/* Separate pages with minimal layout (no old navbar) */}
               <Route path="/blog" element={<MinimalLayout><Blog /></MinimalLayout>} />
               <Route path="/stories" element={<MinimalLayout><Stories /></MinimalLayout>} />
-              <Route path="/resume" element={<MinimalLayout><ResumeHTMLRenderer username={subdomainUser} /></MinimalLayout>} />
+              <Route path="/resume" element={<MinimalLayout><ResumeHTMLRenderer username={profileUser} /></MinimalLayout>} />
               {/* Full Portfolio Layout Variants */}
               <Route path="/portfolio" element={<PortfolioRouter />} />
               <Route path="/vertical" element={<VerticalProfilePage />} />

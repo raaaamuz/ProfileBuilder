@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { useParams } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Home, User, GraduationCap, Briefcase, Wrench, Package, Trophy, Quote, Mail, Info } from 'lucide-react';
 import api from '../../../services/api';
-import { getSubdomainUsername } from '../../../utils/subdomain';
+import { getSubdomainUsername, getUsernameSyncOnly } from '../../../utils/subdomain';
 import { PublicTemplateProvider } from '../../../context/PublicTemplateContext';
 
 // Import public-aware section components
@@ -153,7 +153,9 @@ const FooterSection = ({ username, accentColor }) => {
 const HorizontalScrollLayout = () => {
   const { username: urlUsername } = useParams();
   const subdomainUser = getSubdomainUsername();
-  const username = urlUsername || subdomainUser;
+  // Also check cached custom domain username (resolved in App.js)
+  const cachedCustomDomainUser = getUsernameSyncOnly();
+  const username = urlUsername || subdomainUser || cachedCustomDomainUser;
 
   const [settings, setSettings] = useState(null);
   const [loading, setLoading] = useState(true);

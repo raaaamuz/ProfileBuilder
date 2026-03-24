@@ -2,7 +2,7 @@ import React, { useContext, useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { PublicTemplateContext } from '../../../context/PublicTemplateContext';
 import api from '../../../services/api';
-import { getSubdomainUsername } from '../../../utils/subdomain';
+import { getSubdomainUsername, getUsernameSyncOnly } from '../../../utils/subdomain';
 
 // Import from unified templates
 import { MinimalSkills } from '../../../templates/minimal';
@@ -32,7 +32,8 @@ const PublicSkillsByStyle = () => {
   const { templateStyle } = useContext(PublicTemplateContext);
   const { username: urlUsername } = useParams();
   const subdomainUsername = getSubdomainUsername();
-  const username = urlUsername || subdomainUsername;
+  const cachedCustomDomainUser = getUsernameSyncOnly();
+  const username = urlUsername || subdomainUsername || cachedCustomDomainUser;
   const [skills, setSkills] = useState([]);
 
   useEffect(() => {

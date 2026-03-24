@@ -6,7 +6,7 @@ from .views import (
     public_resume_download, resume_parse, resume_import, check_cv_status, resume_parse_existing,
     resume_html, public_resume_html, update_resume_html, ProfileDesignView, check_onboarding_status, upload_cv,
     skip_onboarding, ProfileNoteViewSet, public_profile_notes, resume_templates, resume_template_css,
-    parse_cv_and_fill
+    parse_cv_and_fill, CustomDomainView, verify_custom_domain, get_user_by_domain, domain_lookup
 )
 
 router = DefaultRouter()
@@ -42,4 +42,9 @@ urlpatterns = [
     path('skip-onboarding/', skip_onboarding, name='skip-onboarding'),
     # Notes endpoints
     path('notes/public/<str:username>/', public_profile_notes, name='public-profile-notes'),
+    # Custom Domain endpoints
+    path('custom-domain/', CustomDomainView.as_view(), name='custom-domain'),
+    path('custom-domain/verify/', verify_custom_domain, name='custom-domain-verify'),
+    path('custom-domain/lookup/<str:domain>/', get_user_by_domain, name='custom-domain-lookup'),
+    path('domain-lookup/', domain_lookup, name='domain-lookup'),
 ]

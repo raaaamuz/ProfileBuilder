@@ -1,7 +1,7 @@
 import React, { createContext, useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import api from '../services/api';
-import { getSubdomainUsername } from '../utils/subdomain';
+import { getSubdomainUsername, getUsernameSyncOnly } from '../utils/subdomain';
 
 export const PublicTemplateContext = createContext({
   templateStyle: null,
@@ -13,7 +13,9 @@ export const PublicTemplateContext = createContext({
 export const PublicTemplateProvider = ({ children }) => {
   const { username: urlUsername } = useParams();
   const subdomainUsername = getSubdomainUsername();
-  const username = urlUsername || subdomainUsername;
+  // Also check cached custom domain username (if already resolved by App.js)
+  const cachedUsername = getUsernameSyncOnly();
+  const username = urlUsername || subdomainUsername || cachedUsername;
 
   const [templateStyle, setTemplateStyle] = useState(null);
   const [templateName, setTemplateName] = useState(null);

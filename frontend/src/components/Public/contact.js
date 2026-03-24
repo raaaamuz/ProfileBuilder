@@ -3,12 +3,13 @@ import { useParams } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faYoutube, faFacebook, faTwitter, faLinkedin } from "@fortawesome/free-brands-svg-icons";
 import api from "../../services/api";
-import { getSubdomainUsername } from "../../utils/subdomain";
+import { getSubdomainUsername, getUsernameSyncOnly } from "../../utils/subdomain";
 
 const Contact = () => {
   const { username: urlUsername } = useParams();
   const subdomainUsername = getSubdomainUsername();
-  const username = urlUsername || subdomainUsername;
+  const cachedCustomDomainUser = getUsernameSyncOnly();
+  const username = urlUsername || subdomainUsername || cachedCustomDomainUser;
 
   const [formData, setFormData] = useState({
     firstName: "",

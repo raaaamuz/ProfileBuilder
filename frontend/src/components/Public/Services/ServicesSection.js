@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import api from '../../../services/api';
 import { PreviewContext } from '../../admin/PreviewContext';
-import { getSubdomainUsername } from '../../../utils/subdomain';
+import { getSubdomainUsername, getUsernameSyncOnly } from '../../../utils/subdomain';
 
 const ICON_MAP = {
   Code, Palette, Camera, FileText, Megaphone, Settings, Zap, Globe, Shield, Package
@@ -23,7 +23,8 @@ const PRICE_TYPES = {
 const ServicesSection = ({ isAdminPreview = false, accentColor = '#6366f1' }) => {
   const { username: urlUsername } = useParams();
   const subdomainUser = getSubdomainUsername();
-  const username = urlUsername || subdomainUser;
+  const cachedCustomDomainUser = getUsernameSyncOnly();
+  const username = urlUsername || subdomainUser || cachedCustomDomainUser;
 
   const previewContext = useContext(PreviewContext);
   const [services, setServices] = useState([]);

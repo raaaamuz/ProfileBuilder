@@ -1,5 +1,6 @@
 from django.db import models
 from django.conf import settings
+import uuid
 
 def default_profile_design_config():
     """Default design config for profile/bio section"""
@@ -81,3 +82,58 @@ class ProfileNote(models.Model):
 
     def __str__(self):
         return f"{self.title} ({self.section})"
+
+
+class CustomDomain(models.Model):
+    """
+    Custom domain configuration for user portfolios.
+    Users can connect their own domain (e.g., portfolio.johnsmith.com)
+    to their Profile2Connect portfolio.
+    """
+    STATUS_CHOICES = [
+        ('pending', 'Pending Verification'),
+        ('verified', 'DNS Verified'),
+        ('ssl_pending', 'SSL Pending'),
+        ('active', 'Active'),
+        ('failed', 'Verification Failed'),
+    ]
+
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="custom_domain"
+    )
+    domain = models.CharField(
+        max_length=255,
+        unique=True,
+        help_text="Custom domain (e.g., portfolio.johnsmith.com)"
+    )
+    verification_token = models.CharField(
+        max_length=64,
+        default=uuid.uuid4,
+        help_text="Token for TXT record verification"
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='pending'
+    )
+    dns_verified = models.BooleanField(default=False)
+    ssl_provisioned = models.BooleanField(default=False)
+    last_verification_attempt = models.DateTimeField(null=True, blank=True)
+    verification_error = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Custom Domain"
+        verbose_name_plural = "Custom Domains"
+
+    def __str__(self):
+        return f"{self.domain} ({self.status}) - {self.user.username}"
+
+    def generate_new_token(self):
+        """Generate a new verification token"""
+        self.verification_token = str(uuid.uuid4()).replace('-', '')[:32]
+        self.save(update_fields=['verification_token'])
+        return self.verification_token

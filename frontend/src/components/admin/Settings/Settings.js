@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import api from "../../../services/api";
+import CustomDomainSettings from "./CustomDomainSettings";
 
 const Settings = () => {
   const navigate = useNavigate();
@@ -684,6 +685,11 @@ const Settings = () => {
             </div>
           </>
         )}
+
+        {/* Custom Domain Settings */}
+        <div style={{ marginTop: '2rem' }}>
+          <CustomDomainSettings />
+        </div>
       </div>
     </div>
   );

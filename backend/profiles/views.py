@@ -11,7 +11,10 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.views import APIView
 from django.shortcuts import get_object_or_404
 from django.core.files.base import ContentFile
-from .models import UserProfile, ProfileDesign, ProfileNote
+from .models import UserProfile, ProfileDesign, ProfileNote, CustomDomain
+import dns.resolver
+import socket
+from datetime import datetime
 from .serializers import UserProfileSerializer, ProfileDesignSerializer, ProfileNoteSerializer
 
 
@@ -2815,3 +2818,289 @@ def public_profile_notes(request, username):
     notes = ProfileNote.objects.filter(user=user, is_visible=True)
     serializer = ProfileNoteSerializer(notes, many=True)
     return Response(serializer.data)
+
+
+# ============================================
+# CUSTOM DOMAIN API VIEWS
+# ============================================
+
+class CustomDomainView(APIView):
+    """
+    API endpoints for managing custom domains.
+    GET: Retrieve current custom domain config
+    POST: Set or update custom domain
+    DELETE: Remove custom domain
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        """Get current custom domain configuration"""
+        try:
+            custom_domain = CustomDomain.objects.get(user=request.user)
+            return Response({
+                'domain': custom_domain.domain,
+                'status': custom_domain.status,
+                'dns_verified': custom_domain.dns_verified,
+                'ssl_provisioned': custom_domain.ssl_provisioned,
+                'verification_token': custom_domain.verification_token,
+                'last_verification_attempt': custom_domain.last_verification_attempt,
+                'verification_error': custom_domain.verification_error,
+                'created_at': custom_domain.created_at,
+                'instructions': {
+                    'cname': {
+                        'type': 'CNAME',
+                        'host': custom_domain.domain,
+                        'value': 'profile2connect.com',
+                        'description': 'Point your domain to our servers'
+                    },
+                    'txt': {
+                        'type': 'TXT',
+                        'host': f'_p2c-verify.{custom_domain.domain}',
+                        'value': custom_domain.verification_token,
+                        'description': 'Verify domain ownership'
+                    }
+                }
+            })
+        except CustomDomain.DoesNotExist:
+            return Response({
+                'domain': None,
+                'status': None,
+                'message': 'No custom domain configured'
+            })
+
+    def post(self, request):
+        """Set or update custom domain"""
+        domain = request.data.get('domain', '').strip().lower()
+
+        if not domain:
+            return Response(
+                {'error': 'Domain is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Validate domain format
+        import re
+        domain_pattern = r'^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$'
+        if not re.match(domain_pattern, domain):
+            return Response(
+                {'error': 'Invalid domain format'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Check if domain is already taken by another user
+        existing = CustomDomain.objects.filter(domain=domain).exclude(user=request.user).first()
+        if existing:
+            return Response(
+                {'error': 'This domain is already registered by another user'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Create or update
+        custom_domain, created = CustomDomain.objects.update_or_create(
+            user=request.user,
+            defaults={
+                'domain': domain,
+                'status': 'pending',
+                'dns_verified': False,
+                'ssl_provisioned': False,
+                'verification_error': None
+            }
+        )
+
+        # Generate new token if creating
+        if created:
+            custom_domain.generate_new_token()
+
+        return Response({
+            'domain': custom_domain.domain,
+            'status': custom_domain.status,
+            'verification_token': custom_domain.verification_token,
+            'message': 'Custom domain configured. Please add the DNS records to verify ownership.',
+            'instructions': {
+                'cname': {
+                    'type': 'CNAME',
+                    'host': domain,
+                    'value': 'profile2connect.com',
+                    'description': 'Point your domain to our servers'
+                },
+                'txt': {
+                    'type': 'TXT',
+                    'host': f'_p2c-verify.{domain}',
+                    'value': custom_domain.verification_token,
+                    'description': 'Verify domain ownership'
+                }
+            }
+        }, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
+
+    def delete(self, request):
+        """Remove custom domain"""
+        try:
+            custom_domain = CustomDomain.objects.get(user=request.user)
+            domain = custom_domain.domain
+            custom_domain.delete()
+            return Response({
+                'message': f'Custom domain {domain} has been removed'
+            })
+        except CustomDomain.DoesNotExist:
+            return Response(
+                {'error': 'No custom domain configured'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def verify_custom_domain(request):
+    """
+    Verify DNS configuration for custom domain.
+    Checks both CNAME and TXT records.
+    """
+    try:
+        custom_domain = CustomDomain.objects.get(user=request.user)
+    except CustomDomain.DoesNotExist:
+        return Response(
+            {'error': 'No custom domain configured'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    domain = custom_domain.domain
+    verification_token = custom_domain.verification_token
+    errors = []
+    cname_verified = False
+    txt_verified = False
+
+    # Check CNAME record
+    try:
+        answers = dns.resolver.resolve(domain, 'CNAME')
+        for rdata in answers:
+            target = str(rdata.target).rstrip('.')
+            if 'profile2connect.com' in target:
+                cname_verified = True
+                break
+        if not cname_verified:
+            errors.append(f'CNAME record found but does not point to profile2connect.com')
+    except dns.resolver.NXDOMAIN:
+        errors.append(f'Domain {domain} does not exist or has no DNS records')
+    except dns.resolver.NoAnswer:
+        # No CNAME, check if A record points to our IP
+        try:
+            answers = dns.resolver.resolve(domain, 'A')
+            # Check if it resolves to our server IP
+            for rdata in answers:
+                if str(rdata) == '51.21.169.213':
+                    cname_verified = True
+                    break
+            if not cname_verified:
+                errors.append('A record does not point to profile2connect.com server')
+        except Exception:
+            errors.append('No CNAME or A record found pointing to profile2connect.com')
+    except Exception as e:
+        errors.append(f'Error checking CNAME: {str(e)}')
+
+    # Check TXT record for verification
+    txt_host = f'_p2c-verify.{domain}'
+    try:
+        answers = dns.resolver.resolve(txt_host, 'TXT')
+        for rdata in answers:
+            txt_value = str(rdata).strip('"')
+            if txt_value == verification_token:
+                txt_verified = True
+                break
+        if not txt_verified:
+            errors.append(f'TXT record found but token does not match')
+    except dns.resolver.NXDOMAIN:
+        errors.append(f'TXT record not found at {txt_host}')
+    except dns.resolver.NoAnswer:
+        errors.append(f'No TXT record found at {txt_host}')
+    except Exception as e:
+        errors.append(f'Error checking TXT record: {str(e)}')
+
+    # Update status
+    custom_domain.last_verification_attempt = datetime.now()
+
+    if cname_verified and txt_verified:
+        custom_domain.dns_verified = True
+        custom_domain.status = 'verified'
+        custom_domain.verification_error = None
+        custom_domain.save()
+
+        return Response({
+            'success': True,
+            'cname_verified': True,
+            'txt_verified': True,
+            'status': 'verified',
+            'message': 'DNS verification successful! Your domain is now verified. SSL certificate will be provisioned shortly.'
+        })
+    else:
+        custom_domain.verification_error = '; '.join(errors)
+        custom_domain.save()
+
+        return Response({
+            'success': False,
+            'cname_verified': cname_verified,
+            'txt_verified': txt_verified,
+            'status': 'pending',
+            'errors': errors,
+            'message': 'DNS verification failed. Please check the records and try again. Note: DNS changes can take up to 48 hours to propagate.'
+        })
+
+
+@api_view(['GET'])
+@permission_classes([permissions.AllowAny])
+def get_user_by_domain(request, domain):
+    """
+    Get username for a custom domain.
+    Used by nginx/frontend to route requests.
+    """
+    try:
+        custom_domain = CustomDomain.objects.get(
+            domain=domain.lower(),
+            status='active'
+        )
+        return Response({
+            'username': custom_domain.user.username,
+            'domain': custom_domain.domain
+        })
+    except CustomDomain.DoesNotExist:
+        return Response(
+            {'error': 'Domain not found or not active'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+
+@api_view(['GET'])
+@permission_classes([permissions.AllowAny])
+def domain_lookup(request):
+    """
+    Look up username for a custom domain using query parameter.
+    Used by frontend to detect custom domain routing.
+
+    Query params:
+        domain: The domain to look up (e.g., portfolio.example.com)
+    """
+    domain = request.query_params.get('domain', '').strip().lower()
+
+    if not domain:
+        return Response(
+            {'error': 'Domain parameter is required'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    try:
+        custom_domain = CustomDomain.objects.get(
+            domain=domain,
+            status='active'
+        )
+        return Response({
+            'username': custom_domain.user.username,
+            'domain': custom_domain.domain,
+            'found': True
+        })
+    except CustomDomain.DoesNotExist:
+        # Return 200 with found=false instead of 404
+        # This helps the frontend distinguish between "not found" and "error"
+        return Response({
+            'username': None,
+            'domain': domain,
+            'found': False
+        })

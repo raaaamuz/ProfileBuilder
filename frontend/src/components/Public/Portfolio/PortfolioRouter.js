@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import api from '../../../services/api';
-import { getSubdomainUsername } from '../../../utils/subdomain';
+import { getSubdomainUsername, getUsernameSyncOnly } from '../../../utils/subdomain';
 
 // Import layout components
 import VerticalProfilePage from '../VerticalSlider/VerticalProfilePage';
@@ -12,11 +12,14 @@ import DefaultProfileLayout from '../Layouts/DefaultProfileLayout';
 /**
  * PortfolioRouter - Automatically routes to user's preferred layout
  * Fetches user's public_layout setting and renders the appropriate component
+ * Supports: URL params, subdomains (username.profile2connect.com), and custom domains
  */
 const PortfolioRouter = () => {
   const { username: urlUsername } = useParams();
   const subdomainUser = getSubdomainUsername();
-  const username = urlUsername || subdomainUser;
+  // Also check for cached custom domain username (resolved in App.js)
+  const cachedCustomDomainUser = getUsernameSyncOnly();
+  const username = urlUsername || subdomainUser || cachedCustomDomainUser;
 
   const [layout, setLayout] = useState(null);
   const [loading, setLoading] = useState(true);
