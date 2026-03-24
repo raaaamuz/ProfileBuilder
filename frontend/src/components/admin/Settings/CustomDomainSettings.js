@@ -197,48 +197,72 @@ const CustomDomainSettings = () => {
         <div className="space-y-4">
           <div className="flex items-center gap-2 text-slate-300">
             <Info size={16} />
-            <span className="text-sm font-medium">Add these DNS records at your domain registrar:</span>
+            <span className="text-sm font-medium">Add these DNS records at your domain registrar (e.g., GoDaddy, Namecheap):</span>
           </div>
 
-          {/* CNAME Record */}
-          <div className="bg-slate-900/50 rounded-lg p-4 border border-slate-700/50">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-medium text-indigo-400 uppercase tracking-wide">
-                {domainData.instructions.cname.type} Record
-              </span>
-              <span className="text-xs text-slate-500">{domainData.instructions.cname.description}</span>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="text-xs text-slate-500 block mb-1">Host / Name</label>
-                <div className="flex items-center gap-2">
-                  <code className="flex-1 px-3 py-2 rounded bg-slate-800 text-green-400 text-sm font-mono">
-                    {domainData.instructions.cname.host}
-                  </code>
-                  <button
-                    onClick={() => copyToClipboard(domainData.instructions.cname.host, "cname-host")}
-                    className="p-2 rounded hover:bg-slate-700 text-slate-400 hover:text-white"
-                  >
-                    {copied === "cname-host" ? <CheckCircle size={16} className="text-green-400" /> : <Copy size={16} />}
-                  </button>
+          {/* Check if root domain (no subdomain like www or portfolio) */}
+          {(() => {
+            const domain = domainData.domain;
+            const parts = domain.split('.');
+            // Root domain has 2 parts (example.com) or is a country TLD with 3 parts (example.co.in)
+            const isRootDomain = parts.length === 2 || (parts.length === 3 && parts[1].length <= 3);
+            const serverIP = "51.21.169.213";
+
+            return (
+              <>
+                {/* A Record (for root domains) or CNAME Record (for subdomains) */}
+                <div className="bg-slate-900/50 rounded-lg p-4 border border-slate-700/50">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-medium text-indigo-400 uppercase tracking-wide">
+                      {isRootDomain ? "A Record" : "CNAME Record"}
+                    </span>
+                    <span className="text-xs text-slate-500">
+                      {isRootDomain ? "Point your domain to our server" : "Point your domain to our servers"}
+                    </span>
+                  </div>
+
+                  {isRootDomain && (
+                    <div className="mb-3 p-2 rounded bg-yellow-500/10 border border-yellow-500/20">
+                      <p className="text-xs text-yellow-300">
+                        <strong>Note:</strong> Root domains (like {domain}) require an A record. CNAME is only for subdomains (like www.{domain}).
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-xs text-slate-500 block mb-1">Host / Name</label>
+                      <div className="flex items-center gap-2">
+                        <code className="flex-1 px-3 py-2 rounded bg-slate-800 text-green-400 text-sm font-mono">
+                          @
+                        </code>
+                        <button
+                          onClick={() => copyToClipboard("@", "record-host")}
+                          className="p-2 rounded hover:bg-slate-700 text-slate-400 hover:text-white"
+                        >
+                          {copied === "record-host" ? <CheckCircle size={16} className="text-green-400" /> : <Copy size={16} />}
+                        </button>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-xs text-slate-500 block mb-1">Value / {isRootDomain ? "IP Address" : "Target"}</label>
+                      <div className="flex items-center gap-2">
+                        <code className="flex-1 px-3 py-2 rounded bg-slate-800 text-green-400 text-sm font-mono">
+                          {isRootDomain ? serverIP : "profile2connect.com"}
+                        </code>
+                        <button
+                          onClick={() => copyToClipboard(isRootDomain ? serverIP : "profile2connect.com", "record-value")}
+                          className="p-2 rounded hover:bg-slate-700 text-slate-400 hover:text-white"
+                        >
+                          {copied === "record-value" ? <CheckCircle size={16} className="text-green-400" /> : <Copy size={16} />}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              </div>
-              <div>
-                <label className="text-xs text-slate-500 block mb-1">Value / Target</label>
-                <div className="flex items-center gap-2">
-                  <code className="flex-1 px-3 py-2 rounded bg-slate-800 text-green-400 text-sm font-mono">
-                    {domainData.instructions.cname.value}
-                  </code>
-                  <button
-                    onClick={() => copyToClipboard(domainData.instructions.cname.value, "cname-value")}
-                    className="p-2 rounded hover:bg-slate-700 text-slate-400 hover:text-white"
-                  >
-                    {copied === "cname-value" ? <CheckCircle size={16} className="text-green-400" /> : <Copy size={16} />}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
+              </>
+            );
+          })()}
 
           {/* TXT Record */}
           <div className="bg-slate-900/50 rounded-lg p-4 border border-slate-700/50">
@@ -356,8 +380,11 @@ const CustomDomainSettings = () => {
 
           {/* Help Text */}
           <div className="text-xs text-slate-500 space-y-1">
-            <p>• DNS changes can take up to 48 hours to propagate</p>
-            <p>• Make sure to add both CNAME and TXT records</p>
+            <p>• DNS changes can take 5-30 minutes (up to 48 hours in some cases)</p>
+            <p>• For root domains (example.com): Use <strong className="text-slate-400">A Record</strong> with IP address</p>
+            <p>• For subdomains (www.example.com): Use <strong className="text-slate-400">CNAME Record</strong></p>
+            <p>• Don't forget to add the <strong className="text-slate-400">TXT Record</strong> for verification</p>
+            <p>• Set TTL to "1/2 Hour" or "600 seconds" for faster propagation</p>
             <p>• SSL certificate will be automatically provisioned after verification</p>
           </div>
         </div>
