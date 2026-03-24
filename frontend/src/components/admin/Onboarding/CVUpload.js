@@ -1,15 +1,36 @@
-import React, { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Upload, FileText, ArrowRight, Loader2, CheckCircle } from "lucide-react";
+import { Upload, FileText, ArrowRight, Loader2, CheckCircle, FileCheck } from "lucide-react";
 import api from "../../../services/api";
 
 const CVUpload = () => {
   const navigate = useNavigate();
   const [cvFile, setCvFile] = useState(null);
+  const [existingCV, setExistingCV] = useState(null); // Previously uploaded CV
   const [isUploading, setIsUploading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [message, setMessage] = useState("");
   const [parseResult, setParseResult] = useState(null);
   const [dragActive, setDragActive] = useState(false);
+
+  // Check for existing CV on mount
+  useEffect(() => {
+    const checkExistingCV = async () => {
+      try {
+        const response = await api.get("/profile/cv/status/");
+        if (response.data.has_cv) {
+          setExistingCV({
+            name: response.data.cv_name || "Uploaded CV",
+          });
+        }
+      } catch (error) {
+        console.error("Error checking CV status:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    checkExistingCV();
+  }, []);
 
   const handleDrag = (e) => {
     e.preventDefault();
@@ -51,6 +72,10 @@ const CVUpload = () => {
       formData.append("cv", cvFile);
 
       const token = localStorage.getItem("token");
+      console.log("[CVUpload] Starting upload...");
+      console.log("[CVUpload] Token:", token ? "present" : "missing");
+      console.log("[CVUpload] File:", cvFile.name, cvFile.size, "bytes");
+
       const response = await api.post("/profile/upload-cv/", formData, {
         headers: {
           "Content-Type": "multipart/form-data",
@@ -58,23 +83,55 @@ const CVUpload = () => {
         },
       });
 
+      console.log("[CVUpload] Response:", response.data);
       const data = response.data;
       setMessage(data.message || "CV uploaded successfully!");
 
       if (data.parsed_data) {
         setParseResult(data.parsed_data);
-        // Wait longer so user can see what was imported
+        // Wait longer so user can see what was imported, then go to template selection
         setTimeout(() => {
-          navigate("/dashboard/profile");
+          navigate("/dashboard/onboarding/select-template");
         }, 3000);
       } else {
+        // No parse data, still go to template selection
         setTimeout(() => {
-          navigate("/dashboard/home");
+          navigate("/dashboard/onboarding/select-template");
         }, 1500);
       }
     } catch (error) {
-      console.error("Error uploading CV:", error);
+      console.error("[CVUpload] Error uploading CV:", error);
+      console.error("[CVUpload] Error response:", error.response?.data);
+      console.error("[CVUpload] Error status:", error.response?.status);
       setMessage("Failed to upload CV. Please try again.");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleReparse = async () => {
+    setIsUploading(true);
+    setMessage("");
+    setParseResult(null);
+
+    try {
+      const response = await api.post("/profile/parse-cv/");
+      const data = response.data;
+
+      if (data.success) {
+        setMessage(data.message || "CV re-parsed successfully!");
+        if (data.parsed_data) {
+          setParseResult(data.parsed_data);
+          setTimeout(() => {
+            navigate("/dashboard/home");
+          }, 2000);
+        }
+      } else {
+        setMessage(data.message || "Failed to parse CV");
+      }
+    } catch (error) {
+      console.error("Error re-parsing CV:", error);
+      setMessage("Failed to re-parse CV. Please try uploading again.");
     } finally {
       setIsUploading(false);
     }
@@ -89,7 +146,8 @@ const CVUpload = () => {
     } catch (error) {
       console.error("Error skipping onboarding:", error);
     }
-    navigate("/dashboard/home");
+    // Skip CV but still show template selection
+    navigate("/dashboard/onboarding/select-template");
   };
 
   return (
@@ -108,6 +166,33 @@ const CVUpload = () => {
 
         {/* Upload Card */}
         <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20">
+          {/* Show existing CV if available */}
+          {!isLoading && existingCV && !cvFile && (
+            <div className="mb-4 p-4 rounded-xl bg-green-500/20 border border-green-400/30">
+              <div className="flex items-center gap-3">
+                <FileCheck className="text-green-400" size={24} />
+                <div className="flex-1">
+                  <p className="text-white font-medium">CV Already Uploaded</p>
+                  <p className="text-green-300 text-sm">{existingCV.name}</p>
+                </div>
+                <button
+                  onClick={handleReparse}
+                  disabled={isUploading}
+                  className="px-4 py-2 rounded-lg bg-purple-500 text-white text-sm font-medium hover:bg-purple-600 transition-all disabled:opacity-50 mr-2"
+                >
+                  {isUploading ? "Parsing..." : "Re-parse CV"}
+                </button>
+                <button
+                  onClick={() => navigate("/dashboard/onboarding/select-template")}
+                  className="px-4 py-2 rounded-lg bg-green-500 text-white text-sm font-medium hover:bg-green-600 transition-all"
+                >
+                  Continue
+                </button>
+              </div>
+              <p className="text-gray-400 text-xs mt-2">Click "Re-parse CV" to extract data again, or upload a new CV below</p>
+            </div>
+          )}
+
           {/* Drag & Drop Zone */}
           <div
             onDragEnter={handleDrag}
@@ -140,7 +225,7 @@ const CVUpload = () => {
             ) : (
               <div className="flex flex-col items-center">
                 <Upload className="text-gray-400 mb-3" size={48} />
-                <p className="text-white font-medium">Drag & drop your CV here</p>
+                <p className="text-white font-medium">{existingCV ? "Upload a new CV" : "Drag & drop your CV here"}</p>
                 <p className="text-gray-400 text-sm mt-1">or click to browse</p>
                 <p className="text-gray-500 text-xs mt-3">PDF, DOC, DOCX (Max 10MB)</p>
               </div>
@@ -180,6 +265,9 @@ const CVUpload = () => {
                 )}
                 {parseResult.skills?.length > 0 && (
                   <p className="text-gray-300"><span className="text-gray-400">Skills:</span> {parseResult.skills.length} skills imported</p>
+                )}
+                {parseResult.awards?.length > 0 && (
+                  <p className="text-gray-300"><span className="text-gray-400">Awards:</span> {parseResult.awards.length} awards imported</p>
                 )}
               </div>
               <p className="text-indigo-300 text-xs mt-3">Redirecting to your profile...</p>

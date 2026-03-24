@@ -41,9 +41,11 @@ const Navbar = () => {
   const token = localStorage.getItem("token");
   const isGuestOnLanding = !token && !effectiveUsername && location.pathname === "/";
 
-  // Hide navbar for logged-in users (they use admin sidebar) and guests on auth pages
+  // Hide navbar for logged-in users in admin area (they use admin sidebar) and guests on auth pages
+  // But ALWAYS show navbar on public profile pages
   const isAuthPage = ['/login', '/register'].includes(location.pathname);
-  const shouldHideNavbar = token || isGuestOnLanding || isAuthPage;
+  const isAdminArea = location.pathname.startsWith('/dashboard');
+  const shouldHideNavbar = (token && !isPublicView && isAdminArea) || isGuestOnLanding || isAuthPage;
 
   useEffect(() => {
     const storedToken = localStorage.getItem("token");
@@ -167,37 +169,25 @@ const Navbar = () => {
       return;
     }
 
-    // For public users (main domain), map each tab to its public version.
-    if (!isAuthenticated && effectiveUsername) {
-      let publicPath = "";
-      switch (tab.key) {
-        case "show_home":
-          publicPath = `/public/home/${username || "guest"}`;
-          break;
-        case "show_profile":
-          publicPath = `/public/profile/${username || "guest"}`;
-          break;
-        case "show_blog":
-          publicPath = `/public/blog/${username || "guest"}`;
-          break;
-        case "show_stories":
-          publicPath = `/public/stories/${username || "guest"}`;
-          break;
-        case "show_contact":
-          publicPath = `/public/contact/${username || "guest"}`;
-          break;
-        default:
-          publicPath = tab.path;
-      }
-      navigate(publicPath);
-      return;
-    }
-    // For logged-in users, use the original tab path.
-    navigate(tab.path);
+    // For users on public profile routes or viewing their own profile
+    // Navigate to public pages (not admin dashboard)
+    const pathMap = {
+      "show_home": `/public/home/${username || "guest"}`,
+      "show_profile": `/public/profile/${username || "guest"}`,
+      "show_blog": `/public/blog/${username || "guest"}`,
+      "show_stories": `/public/stories/${username || "guest"}`,
+      "show_contact": `/public/contact/${username || "guest"}`,
+    };
+    navigate(pathMap[tab.key] || tab.path);
   };
 
   // Hide navbar for logged-in users, guests on landing page, or auth pages
   if (shouldHideNavbar) {
+    return null;
+  }
+
+  // Hide navbar when only one tab is visible (no navigation needed)
+  if (tabs.length <= 1) {
     return null;
   }
 

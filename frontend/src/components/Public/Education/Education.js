@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import api from "../../../services/api";
 import { getSubdomainUsername } from "../../../utils/subdomain";
 
-const Education = ({ liveDesignConfig, liveEducationData, globalFont }) => {
+const Education = ({ liveDesignConfig, liveEducationData, globalFont, isAdminPreview: isAdminPreviewProp = false }) => {
   const [educationData, setEducationData] = useState([]);
   const [designConfig, setDesignConfig] = useState(null);
   const [expandedId, setExpandedId] = useState(null);
@@ -14,7 +14,7 @@ const Education = ({ liveDesignConfig, liveEducationData, globalFont }) => {
   const username = urlUsername || subdomainUsername;
 
   // Check if we're in admin preview mode
-  const isAdminPreview = !username && window.location.pathname.includes('/dashboard/');
+  const isAdminPreview = isAdminPreviewProp || (!username && window.location.pathname.includes('/dashboard/'));
 
   // Default design if none selected
   const defaultDesign = {
@@ -311,7 +311,7 @@ const Education = ({ liveDesignConfig, liveEducationData, globalFont }) => {
 
   // ALTERNATING TIMELINE - Zigzag pattern with entries on alternate sides
   const AlternatingTimelineLayout = () => (
-    <div style={{ position: "relative", maxWidth: "900px", margin: "0 auto" }}>
+    <div style={{ position: "relative", maxWidth: isAdminPreview ? "none" : "900px", margin: isAdminPreview ? "0" : "0 auto", width: "100%" }}>
       {/* Center timeline line */}
       <div style={{
         position: "absolute",
@@ -571,8 +571,9 @@ const Education = ({ liveDesignConfig, liveEducationData, globalFont }) => {
       display: "flex",
       flexDirection: "column",
       gap: "1rem",
-      maxWidth: "700px",
-      margin: "0 auto",
+      maxWidth: isAdminPreview ? "none" : "700px",
+      margin: isAdminPreview ? "0" : "0 auto",
+      width: "100%",
       perspective: "1000px",
     }}>
       {educationData.map((entry, index) => (
@@ -831,7 +832,7 @@ const Education = ({ liveDesignConfig, liveEducationData, globalFont }) => {
 
   // MINIMAL LAYOUT
   const MinimalLayout = () => (
-    <div style={{ maxWidth: "600px", margin: "0 auto" }}>
+    <div style={{ maxWidth: isAdminPreview ? "none" : "600px", margin: isAdminPreview ? "0" : "0 auto", width: "100%" }}>
       {educationData.map((entry, index) => (
         <motion.div
           key={entry.id || index}
@@ -975,6 +976,7 @@ const Education = ({ liveDesignConfig, liveEducationData, globalFont }) => {
         fontFamily: globalFont || design.fontFamily,
         paddingTop: "4rem",
         paddingBottom: "4rem",
+        width: "100%",
       }}
     >
       <div className="w-full px-4">

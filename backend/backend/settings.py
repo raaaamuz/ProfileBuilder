@@ -31,12 +31,21 @@ LOGGING = {
             "class": "logging.FileHandler",
             "filename": "debug.log",
         },
+        "console": {
+            "level": "DEBUG",
+            "class": "logging.StreamHandler",
+        },
     },
     "loggers": {
         "django": {
             "handlers": ["file"],
             "level": "DEBUG",
             "propagate": True,
+        },
+        "profiles": {
+            "handlers": ["console"],
+            "level": "DEBUG",
+            "propagate": False,
         },
     },
 }
@@ -81,7 +90,10 @@ INSTALLED_APPS = [
     'blog',
     'public_profile',
     'achievements',
-    'contact'
+    'contact',
+    'templates_design',
+    'services',
+    'testimonials',
 ]
 
 MEDIA_URL = "/media/"

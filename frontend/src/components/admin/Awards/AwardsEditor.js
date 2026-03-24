@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { DndContext, closestCenter } from "@dnd-kit/core";
 import { SortableContext, arrayMove, verticalListSortingStrategy, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Trophy, Star, ChevronDown, ChevronUp, Trash2, GripVertical, Plus, Check } from "lucide-react";
+import { Trophy, Star, ChevronDown, ChevronUp, Trash2, GripVertical, Plus, Check, Upload, Loader2 } from "lucide-react";
 import api from "../../../services/api";
 import { PreviewContext } from "../PreviewContext";
 
@@ -394,7 +394,7 @@ const AchievementRow = ({ entry, isExpanded, onToggleExpand, onUpdateEntry, onDe
 
 const AwardsEditor = () => {
   const navigate = useNavigate();
-  const { updateAwardsDesign } = useContext(PreviewContext);
+  const { updateAwardsDesign, updateLiveAwards } = useContext(PreviewContext);
   const [activeTab, setActiveTab] = useState("awards");
 
   // Design state
@@ -408,11 +408,24 @@ const AwardsEditor = () => {
   const [achievements, setAchievements] = useState([]);
   const [expandedAchievementIds, setExpandedAchievementIds] = useState([]);
 
+  // Import from CV state
+  const [isImporting, setIsImporting] = useState(false);
+  const [importMessage, setImportMessage] = useState("");
+
   useEffect(() => {
     fetchAwards();
     fetchAchievements();
     fetchDesign();
   }, []);
+
+  // Sync awards data to live preview
+  useEffect(() => {
+    if (updateLiveAwards && awards.length > 0) {
+      // Filter out unsaved entries for preview
+      const savedAwards = awards.filter(a => !a.isNew);
+      updateLiveAwards(savedAwards);
+    }
+  }, [awards, updateLiveAwards]);
 
   const fetchDesign = async () => {
     try {
@@ -444,6 +457,31 @@ const AwardsEditor = () => {
       await api.put('/achievements/design/', { design_config: design });
     } catch (error) {
       console.error('Error saving design:', error);
+    }
+  };
+
+  const handleImportFromCV = async () => {
+    setIsImporting(true);
+    setImportMessage("");
+    try {
+      // Import both awards and achievements
+      const response = await api.post("/ai/import-from-cv/", { section: activeTab });
+      if (response.data.success) {
+        const imported = response.data.imported;
+        const count = imported.awards || imported.achievements || 0;
+        setImportMessage(`Imported ${count} ${activeTab} from your CV!`);
+        // Refresh data
+        if (activeTab === "awards") {
+          fetchAwards();
+        } else {
+          fetchAchievements();
+        }
+      }
+    } catch (error) {
+      const errorMsg = error.response?.data?.error || "Failed to import from CV";
+      setImportMessage(errorMsg);
+    } finally {
+      setIsImporting(false);
     }
   };
 
@@ -605,6 +643,32 @@ const AwardsEditor = () => {
         selectedDesign={selectedDesign}
         onSelectDesign={handleSelectDesign}
       />
+
+      {/* Import from CV Button */}
+      <div className="mb-4 flex items-center justify-between">
+        <button
+          onClick={handleImportFromCV}
+          disabled={isImporting}
+          className="flex items-center gap-2 px-3 py-2 text-sm bg-slate-700 text-white font-medium rounded hover:bg-slate-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isImporting ? (
+            <>
+              <Loader2 className="animate-spin" size={14} />
+              Importing...
+            </>
+          ) : (
+            <>
+              <Upload size={14} />
+              Import from CV
+            </>
+          )}
+        </button>
+        {importMessage && (
+          <span className={`text-sm ${importMessage.includes("Failed") || importMessage.includes("error") ? "text-red-400" : "text-green-400"}`}>
+            {importMessage}
+          </span>
+        )}
+      </div>
 
       {/* Tabs */}
       <div className="flex gap-1 mb-4 p-1 rounded-md" style={{ backgroundColor: '#0f172a' }}>

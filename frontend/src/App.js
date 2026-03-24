@@ -7,6 +7,7 @@ import Navbar from './components/Public/NavBar';
 import SectionNavigator from './components/admin/SectionNavigator';
 import AdminHome from './components/admin/Home/AdminHome';
 import AdminSettings from './components/admin/Settings/Settings';
+import AdminAccount from './components/admin/Settings/Account';
 import Contact from './components/Public/contact';
 import Education from './components/Public/Education/Education';
 import CareerTimeline from './components/Public/Career/CareerTimeline';
@@ -31,9 +32,21 @@ import SkillForm from './components/admin/Skill/SkillForm';
 import AdminResume from './components/admin/Resume/AdminResume';
 import AwardsEditor from './components/admin/Awards/AwardsEditor';
 import AdminInbox from './components/admin/Inbox/AdminInbox';
+import AdminServices from './components/admin/Services/AdminServices';
+import AdminTestimonials from './components/admin/Testimonials/AdminTestimonials';
+import ServicesSection from './components/Public/Services/ServicesSection';
+import TestimonialsSection from './components/Public/Testimonials/TestimonialsSection';
 import CVUpload from './components/admin/Onboarding/CVUpload';
+import TemplateSelection from './components/admin/Onboarding/TemplateSelection';
 import AdminDashboard from './components/admin/AdminDashboard';
 import { getSubdomainUsername } from './utils/subdomain';
+
+// Public Layout Variants
+import VerticalProfilePage from './components/Public/VerticalSlider/VerticalProfilePage';
+import CardStackLayout from './components/Public/Layouts/CardStackLayout';
+import HorizontalScrollLayout from './components/Public/Layouts/HorizontalScrollLayout';
+import PortfolioRouter from './components/Public/Portfolio/PortfolioRouter';
+import MinimalLayout from './components/Public/Layouts/MinimalLayout';
 
 // Layout Component for Navbar control
 const Layout = ({ children }) => {
@@ -68,6 +81,45 @@ const HomePageWrapper = () => {
   return <Layout><Home /></Layout>;
 };
 
+// Profile Page Wrapper - Redirects to user's public profile with new layout
+const ProfilePageWrapper = () => {
+  const [username, setUsername] = React.useState(null);
+  const [loading, setLoading] = React.useState(true);
+  const token = localStorage.getItem('token');
+
+  React.useEffect(() => {
+    const fetchUsername = async () => {
+      if (token) {
+        try {
+          const api = (await import('./services/api')).default;
+          const res = await api.get('users/username/');
+          setUsername(res.data.username);
+        } catch (err) {
+          console.error('Error fetching username:', err);
+        }
+      }
+      setLoading(false);
+    };
+    fetchUsername();
+  }, [token]);
+
+  if (loading) {
+    return (
+      <div style={{ minHeight: '100vh', backgroundColor: '#0f172a', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ width: '3rem', height: '3rem', border: '4px solid rgba(255,255,255,0.1)', borderTopColor: '#6366f1', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+      </div>
+    );
+  }
+
+  if (username) {
+    // Redirect to the user's public profile with new layout
+    return <Navigate to={`/public/profile/${username}`} replace />;
+  }
+
+  // For guests, redirect to login
+  return <Navigate to="/login" replace />;
+};
+
 // Main Application
 function App() {
   const subdomainUser = getSubdomainUsername();
@@ -79,17 +131,28 @@ function App() {
         <Router>
           <PreviewProvider>
             <Routes>
-              <Route path="/" element={<Layout><Profile /></Layout>} />
-              <Route path="/home" element={<Layout><Home /></Layout>} />
-              <Route path="/profile" element={<Layout><Profile /></Layout>} />
-              <Route path="/education" element={<Layout><Education /></Layout>} />
-              <Route path="/career" element={<Layout><CareerTimeline /></Layout>} />
-              <Route path="/contact" element={<Layout><Contact /></Layout>} />
-              <Route path="/blog" element={<Layout><Blog /></Layout>} />
-              <Route path="/stories" element={<Layout><Stories /></Layout>} />
-              <Route path="/resume" element={<Layout><ResumeHTMLRenderer username={subdomainUser} /></Layout>} />
-              {/* Catch all - redirect to profile */}
-              <Route path="*" element={<Layout><Profile /></Layout>} />
+              {/* All profile sections use PortfolioRouter for consistent new layout */}
+              <Route path="/" element={<PortfolioRouter />} />
+              <Route path="/home" element={<PortfolioRouter />} />
+              <Route path="/profile" element={<PortfolioRouter />} />
+              <Route path="/education" element={<PortfolioRouter />} />
+              <Route path="/career" element={<PortfolioRouter />} />
+              <Route path="/contact" element={<PortfolioRouter />} />
+              <Route path="/services" element={<PortfolioRouter />} />
+              <Route path="/testimonials" element={<PortfolioRouter />} />
+              <Route path="/skills" element={<PortfolioRouter />} />
+              <Route path="/awards" element={<PortfolioRouter />} />
+              {/* Separate pages with minimal layout (no old navbar) */}
+              <Route path="/blog" element={<MinimalLayout><Blog /></MinimalLayout>} />
+              <Route path="/stories" element={<MinimalLayout><Stories /></MinimalLayout>} />
+              <Route path="/resume" element={<MinimalLayout><ResumeHTMLRenderer username={subdomainUser} /></MinimalLayout>} />
+              {/* Full Portfolio Layout Variants */}
+              <Route path="/portfolio" element={<PortfolioRouter />} />
+              <Route path="/vertical" element={<VerticalProfilePage />} />
+              <Route path="/cards" element={<CardStackLayout />} />
+              <Route path="/horizontal" element={<HorizontalScrollLayout />} />
+              {/* Catch all - use portfolio router */}
+              <Route path="*" element={<PortfolioRouter />} />
             </Routes>
           </PreviewProvider>
         </Router>
@@ -105,28 +168,39 @@ function App() {
           {/* Public Routes - Logged-in users redirect to dashboard */}
           <Route path="/" element={<HomePageWrapper />} />
           <Route path="/home" element={<HomePageWrapper />} />
-          <Route path="/profile" element={<Layout><Profile /></Layout>} />
-          <Route path="/education" element={<Layout><Education /></Layout>} />
-          <Route path="/career" element={<Layout><CareerTimeline /></Layout>} />
-          <Route path="/stories" element={<Layout><Stories /></Layout>} />
-          <Route path="/contact" element={<Layout><Contact /></Layout>} />
-          <Route path="/blog" element={<Layout><Blog /></Layout>} />
-          <Route path="/blog/:id" element={<Layout><BlogDetail /></Layout>} />
+          <Route path="/profile" element={<ProfilePageWrapper />} />
+          <Route path="/education" element={<ProfilePageWrapper />} />
+          <Route path="/career" element={<ProfilePageWrapper />} />
+          <Route path="/contact" element={<ProfilePageWrapper />} />
+          {/* Standalone pages with minimal layout */}
+          <Route path="/stories" element={<MinimalLayout><Stories /></MinimalLayout>} />
+          <Route path="/blog" element={<MinimalLayout><Blog /></MinimalLayout>} />
+          <Route path="/blog/:id" element={<MinimalLayout><BlogDetail /></MinimalLayout>} />
           <Route path="/register" element={<Layout><Register /></Layout>} />
           <Route path="/login" element={<Layout><Login /></Layout>} />
           <Route path="/verify-email/:token" element={<Layout><VerifyEmail /></Layout>} />
           <Route path="/forgot-password" element={<Layout><ForgotPassword /></Layout>} />
           <Route path="/reset-password/:token" element={<Layout><ResetPassword /></Layout>} />
 
-          {/* Public (Unauthorized) User Pages */}
-          <Route path="/public/home/:username" element={<Layout><Home /></Layout>} />
-          <Route path="/public/profile/:username" element={<Layout><Profile /></Layout>} />
-          <Route path="/public/education/:username" element={<Layout><Education /></Layout>} />
-          <Route path="/public/career/:username" element={<Layout><CareerTimeline /></Layout>} />
-          <Route path="/public/blog/:username" element={<Layout><Blog /></Layout>} />
-          <Route path="/public/stories/:username" element={<Layout><Stories /></Layout>} />
-          <Route path="/public/contact/:username" element={<Layout><Contact /></Layout>} />
-          <Route path="/public/resume/:username" element={<Layout><ResumePage /></Layout>} />
+          {/* Public (Unauthorized) User Pages - All use PortfolioRouter for consistent new layout */}
+          <Route path="/public/home/:username" element={<PortfolioRouter />} />
+          <Route path="/public/profile/:username" element={<PortfolioRouter />} />
+          <Route path="/public/education/:username" element={<PortfolioRouter />} />
+          <Route path="/public/career/:username" element={<PortfolioRouter />} />
+          <Route path="/public/contact/:username" element={<PortfolioRouter />} />
+          <Route path="/public/services/:username" element={<PortfolioRouter />} />
+          <Route path="/public/testimonials/:username" element={<PortfolioRouter />} />
+          <Route path="/public/skills/:username" element={<PortfolioRouter />} />
+          <Route path="/public/awards/:username" element={<PortfolioRouter />} />
+          {/* Separate standalone pages with minimal layout (no old navbar) */}
+          <Route path="/public/blog/:username" element={<MinimalLayout><Blog /></MinimalLayout>} />
+          <Route path="/public/stories/:username" element={<MinimalLayout><Stories /></MinimalLayout>} />
+          <Route path="/public/resume/:username" element={<MinimalLayout><ResumePage /></MinimalLayout>} />
+          {/* Full Portfolio Layout Variants */}
+          <Route path="/public/portfolio/:username" element={<PortfolioRouter />} />
+          <Route path="/public/vertical/:username" element={<VerticalProfilePage />} />
+          <Route path="/public/cards/:username" element={<CardStackLayout />} />
+          <Route path="/public/horizontal/:username" element={<HorizontalScrollLayout />} />
 
           {/* Admin Dashboard (Staff Only) */}
           <Route
@@ -138,12 +212,20 @@ function App() {
             }
           />
 
-          {/* Admin Onboarding Route (CV Upload) */}
+          {/* Admin Onboarding Routes */}
           <Route
             path="/dashboard/onboarding"
             element={
               <PrivateRoute>
                 <CVUpload />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/dashboard/onboarding/select-template"
+            element={
+              <PrivateRoute>
+                <TemplateSelection />
               </PrivateRoute>
             }
           />
@@ -162,10 +244,13 @@ function App() {
             <Route path="education" element={<AdminEducationPage />} />
             <Route path="blogs" element={<BlogForm />} />
             <Route path="career" element={<AdminCareerPage />} />
+            <Route path="account" element={<AdminAccount />} />
             <Route path="settings" element={<AdminSettings />} />
             <Route path="profile_summary" element={<AdminProfileSummary />} />
             <Route path="skills" element={<SkillForm />} />
+            <Route path="services" element={<AdminServices />} />
             <Route path="awards" element={<AwardsEditor />} />
+            <Route path="testimonials" element={<AdminTestimonials />} />
             <Route path="resume" element={<AdminResume />} />
             <Route path="inbox" element={<AdminInbox />} />
           </Route>

@@ -1,13 +1,24 @@
 import React from 'react';
 import { useTheme, themes } from '../../../context/ThemeContext';
-import { FiCheck, FiSun, FiMoon, FiDroplet, FiRefreshCw } from 'react-icons/fi';
+import { Sun, Moon, Droplets, Check, RefreshCw, Palette, Eye } from 'lucide-react';
+
+// Dark theme colors matching Settings.js
+const darkTheme = {
+  bgPrimary: '#0f172a',
+  bgSecondary: '#1e293b',
+  bgTertiary: '#334155',
+  textPrimary: '#f8fafc',
+  textSecondary: '#94a3b8',
+  accent: '#6366f1',
+  border: '#334155',
+};
 
 const ThemeSelector = () => {
   const { currentTheme, setTheme, theme, updateCustomColor, resetCustomColors, customColors } = useTheme();
 
   const themeIcons = {
-    light: <FiSun className="w-5 h-5" />,
-    dark: <FiMoon className="w-5 h-5" />,
+    light: <Sun size={18} />,
+    dark: <Moon size={18} />,
     ocean: '🌊',
     forest: '🌲',
     sunset: '🌅',
@@ -16,81 +27,146 @@ const ThemeSelector = () => {
   };
 
   return (
-    <div className="space-y-8">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
       {/* Theme Selection */}
-      <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="p-2 bg-gradient-to-br from-purple-100 to-pink-100 rounded-lg">
-            <FiDroplet className="w-5 h-5 text-purple-600" />
+      <div style={{
+        backgroundColor: darkTheme.bgSecondary,
+        borderRadius: '1rem',
+        padding: '1.5rem',
+        border: `1px solid ${darkTheme.border}`
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
+          <div style={{
+            padding: '0.75rem',
+            backgroundColor: 'rgba(99, 102, 241, 0.2)',
+            borderRadius: '0.75rem'
+          }}>
+            <Droplets size={20} style={{ color: darkTheme.accent }} />
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-gray-800">Choose Theme</h3>
-            <p className="text-sm text-gray-500">Select a pre-built theme for your website</p>
+            <h3 style={{ fontSize: '1rem', fontWeight: '600', color: darkTheme.textPrimary, margin: 0 }}>
+              Choose Theme
+            </h3>
+            <p style={{ fontSize: '0.875rem', color: darkTheme.textSecondary, margin: 0 }}>
+              Select a pre-built theme for your website
+            </p>
           </div>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))',
+          gap: '1rem'
+        }}>
           {Object.values(themes).map((t) => (
             <button
               key={t.id}
               onClick={() => setTheme(t.id)}
-              className={`relative p-4 rounded-xl border-2 transition-all duration-200 hover:scale-105 ${
-                currentTheme === t.id
-                  ? 'border-blue-500 shadow-lg shadow-blue-100'
-                  : 'border-gray-200 hover:border-gray-300'
-              }`}
-              style={{ backgroundColor: t.colors.background }}
+              style={{
+                position: 'relative',
+                padding: '1rem',
+                borderRadius: '0.75rem',
+                border: currentTheme === t.id
+                  ? `2px solid ${darkTheme.accent}`
+                  : `2px solid ${darkTheme.border}`,
+                backgroundColor: t.colors.background,
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                boxShadow: currentTheme === t.id ? `0 0 20px ${darkTheme.accent}30` : 'none',
+              }}
             >
               {/* Theme Preview */}
-              <div className="space-y-2">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                 {/* Header preview */}
                 <div
-                  className="h-8 rounded-lg flex items-center px-2 gap-1"
-                  style={{ backgroundColor: t.colors.sidebarBg }}
+                  style={{
+                    height: '2rem',
+                    borderRadius: '0.5rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    padding: '0 0.5rem',
+                    gap: '0.25rem',
+                    backgroundColor: t.colors.sidebarBg,
+                  }}
                 >
                   <div
-                    className="w-2 h-2 rounded-full"
-                    style={{ backgroundColor: t.colors.primary }}
+                    style={{
+                      width: '0.5rem',
+                      height: '0.5rem',
+                      borderRadius: '50%',
+                      backgroundColor: t.colors.primary,
+                    }}
                   />
                   <div
-                    className="flex-1 h-1.5 rounded"
-                    style={{ backgroundColor: t.colors.sidebarText, opacity: 0.3 }}
+                    style={{
+                      flex: 1,
+                      height: '0.375rem',
+                      borderRadius: '0.25rem',
+                      backgroundColor: t.colors.sidebarText,
+                      opacity: 0.3,
+                    }}
                   />
                 </div>
 
                 {/* Content preview */}
-                <div className="flex gap-2">
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
                   <div
-                    className="w-1/3 h-12 rounded-lg"
-                    style={{ backgroundColor: t.colors.primary }}
+                    style={{
+                      width: '33%',
+                      height: '3rem',
+                      borderRadius: '0.5rem',
+                      backgroundColor: t.colors.primary,
+                    }}
                   />
-                  <div className="flex-1 space-y-1.5">
+                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
                     <div
-                      className="h-2 rounded w-full"
-                      style={{ backgroundColor: t.colors.text, opacity: 0.2 }}
+                      style={{
+                        height: '0.5rem',
+                        borderRadius: '0.25rem',
+                        width: '100%',
+                        backgroundColor: t.colors.text,
+                        opacity: 0.2,
+                      }}
                     />
                     <div
-                      className="h-2 rounded w-3/4"
-                      style={{ backgroundColor: t.colors.text, opacity: 0.1 }}
+                      style={{
+                        height: '0.5rem',
+                        borderRadius: '0.25rem',
+                        width: '75%',
+                        backgroundColor: t.colors.text,
+                        opacity: 0.1,
+                      }}
                     />
                   </div>
                 </div>
               </div>
 
               {/* Theme Name */}
-              <div className="mt-3 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="text-lg">{themeIcons[t.id]}</span>
+              <div style={{
+                marginTop: '0.75rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <span style={{ fontSize: '1rem' }}>{themeIcons[t.id]}</span>
                   <span
-                    className="text-sm font-medium"
-                    style={{ color: t.colors.text }}
+                    style={{
+                      fontSize: '0.875rem',
+                      fontWeight: '500',
+                      color: t.colors.text,
+                    }}
                   >
                     {t.name}
                   </span>
                 </div>
                 {currentTheme === t.id && (
-                  <div className="p-1 bg-blue-500 rounded-full">
-                    <FiCheck className="w-3 h-3 text-white" />
+                  <div style={{
+                    padding: '0.25rem',
+                    backgroundColor: darkTheme.accent,
+                    borderRadius: '50%'
+                  }}>
+                    <Check size={12} style={{ color: 'white' }} />
                   </div>
                 )}
               </div>
@@ -100,70 +176,92 @@ const ThemeSelector = () => {
       </div>
 
       {/* Custom Color Adjustments */}
-      <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-gradient-to-br from-blue-100 to-cyan-100 rounded-lg">
-              <span className="text-lg">🎨</span>
+      <div style={{
+        backgroundColor: darkTheme.bgSecondary,
+        borderRadius: '1rem',
+        padding: '1.5rem',
+        border: `1px solid ${darkTheme.border}`
+      }}>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginBottom: '1.5rem'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <div style={{
+              padding: '0.75rem',
+              backgroundColor: 'rgba(99, 102, 241, 0.2)',
+              borderRadius: '0.75rem'
+            }}>
+              <Palette size={20} style={{ color: darkTheme.accent }} />
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-gray-800">Customize Colors</h3>
-              <p className="text-sm text-gray-500">Fine-tune the selected theme</p>
+              <h3 style={{ fontSize: '1rem', fontWeight: '600', color: darkTheme.textPrimary, margin: 0 }}>
+                Customize Colors
+              </h3>
+              <p style={{ fontSize: '0.875rem', color: darkTheme.textSecondary, margin: 0 }}>
+                Fine-tune the selected theme
+              </p>
             </div>
           </div>
           {Object.keys(customColors).length > 0 && (
             <button
               onClick={resetCustomColors}
-              className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                padding: '0.5rem 0.75rem',
+                fontSize: '0.875rem',
+                color: darkTheme.textSecondary,
+                backgroundColor: darkTheme.bgTertiary,
+                border: 'none',
+                borderRadius: '0.5rem',
+                cursor: 'pointer',
+              }}
             >
-              <FiRefreshCw className="w-4 h-4" />
+              <RefreshCw size={16} />
               Reset
             </button>
           )}
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {/* Primary Color */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+          gap: '1rem'
+        }}>
           <ColorPicker
             label="Primary Color"
             description="Buttons, links, accents"
             value={theme.colors.primary}
             onChange={(value) => updateCustomColor('primary', value)}
           />
-
-          {/* Background Color */}
           <ColorPicker
             label="Background"
             description="Page background"
             value={theme.colors.background}
             onChange={(value) => updateCustomColor('background', value)}
           />
-
-          {/* Text Color */}
           <ColorPicker
             label="Text Color"
             description="Main text color"
             value={theme.colors.text}
             onChange={(value) => updateCustomColor('text', value)}
           />
-
-          {/* Sidebar Color */}
           <ColorPicker
             label="Sidebar"
             description="Navigation sidebar"
             value={theme.colors.sidebarBg}
             onChange={(value) => updateCustomColor('sidebarBg', value)}
           />
-
-          {/* Card Background */}
           <ColorPicker
             label="Card Background"
             description="Cards and panels"
             value={theme.colors.cardBg}
             onChange={(value) => updateCustomColor('cardBg', value)}
           />
-
-          {/* Accent Color */}
           <ColorPicker
             label="Accent Color"
             description="Highlights and badges"
@@ -174,72 +272,122 @@ const ThemeSelector = () => {
       </div>
 
       {/* Live Preview */}
-      <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="p-2 bg-gradient-to-br from-green-100 to-emerald-100 rounded-lg">
-            <span className="text-lg">👁️</span>
+      <div style={{
+        backgroundColor: darkTheme.bgSecondary,
+        borderRadius: '1rem',
+        padding: '1.5rem',
+        border: `1px solid ${darkTheme.border}`
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
+          <div style={{
+            padding: '0.75rem',
+            backgroundColor: 'rgba(16, 185, 129, 0.2)',
+            borderRadius: '0.75rem'
+          }}>
+            <Eye size={20} style={{ color: '#10b981' }} />
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-gray-800">Live Preview</h3>
-            <p className="text-sm text-gray-500">See how your theme looks</p>
+            <h3 style={{ fontSize: '1rem', fontWeight: '600', color: darkTheme.textPrimary, margin: 0 }}>
+              Live Preview
+            </h3>
+            <p style={{ fontSize: '0.875rem', color: darkTheme.textSecondary, margin: 0 }}>
+              See how your theme looks
+            </p>
           </div>
         </div>
 
         {/* Preview Card */}
         <div
-          className="rounded-xl overflow-hidden border"
           style={{
+            borderRadius: '0.75rem',
+            overflow: 'hidden',
+            border: `1px solid ${theme.colors.border}`,
             backgroundColor: theme.colors.background,
-            borderColor: theme.colors.border,
           }}
         >
           {/* Preview Header */}
           <div
-            className="p-4 flex items-center gap-3"
-            style={{ backgroundColor: theme.colors.sidebarBg }}
+            style={{
+              padding: '1rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.75rem',
+              backgroundColor: theme.colors.sidebarBg,
+            }}
           >
             <div
-              className="w-8 h-8 rounded-full"
-              style={{ backgroundColor: theme.colors.primary }}
+              style={{
+                width: '2rem',
+                height: '2rem',
+                borderRadius: '50%',
+                backgroundColor: theme.colors.primary,
+              }}
             />
-            <div className="flex-1">
+            <div style={{ flex: 1 }}>
               <div
-                className="h-3 w-24 rounded"
-                style={{ backgroundColor: theme.colors.sidebarText }}
+                style={{
+                  height: '0.75rem',
+                  width: '6rem',
+                  borderRadius: '0.25rem',
+                  backgroundColor: theme.colors.sidebarText,
+                }}
               />
             </div>
           </div>
 
           {/* Preview Content */}
-          <div className="p-6" style={{ backgroundColor: theme.colors.background }}>
+          <div style={{ padding: '1.5rem', backgroundColor: theme.colors.background }}>
             <div
-              className="p-4 rounded-lg mb-4"
-              style={{ backgroundColor: theme.colors.cardBg, border: `1px solid ${theme.colors.border}` }}
+              style={{
+                padding: '1rem',
+                borderRadius: '0.5rem',
+                marginBottom: '1rem',
+                backgroundColor: theme.colors.cardBg,
+                border: `1px solid ${theme.colors.border}`,
+              }}
             >
               <h4
-                className="text-lg font-semibold mb-2"
-                style={{ color: theme.colors.text }}
+                style={{
+                  fontSize: '1rem',
+                  fontWeight: '600',
+                  marginBottom: '0.5rem',
+                  color: theme.colors.text,
+                }}
               >
                 Sample Card Title
               </h4>
               <p
-                className="text-sm mb-4"
-                style={{ color: theme.colors.textMuted }}
+                style={{
+                  fontSize: '0.875rem',
+                  marginBottom: '1rem',
+                  color: theme.colors.textMuted,
+                }}
               >
                 This is how your content will appear with the current theme settings.
               </p>
               <button
-                className="px-4 py-2 rounded-lg text-white text-sm font-medium transition-colors"
-                style={{ backgroundColor: theme.colors.primary }}
+                style={{
+                  padding: '0.5rem 1rem',
+                  borderRadius: '0.5rem',
+                  color: 'white',
+                  fontSize: '0.875rem',
+                  fontWeight: '500',
+                  backgroundColor: theme.colors.primary,
+                  border: 'none',
+                  cursor: 'pointer',
+                }}
               >
                 Primary Button
               </button>
             </div>
 
-            <div className="flex gap-2">
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
               <span
-                className="px-3 py-1 rounded-full text-xs font-medium"
                 style={{
+                  padding: '0.25rem 0.75rem',
+                  borderRadius: '9999px',
+                  fontSize: '0.75rem',
+                  fontWeight: '500',
                   backgroundColor: theme.colors.accent + '20',
                   color: theme.colors.accent,
                 }}
@@ -247,8 +395,11 @@ const ThemeSelector = () => {
                 Badge
               </span>
               <span
-                className="px-3 py-1 rounded-full text-xs font-medium"
                 style={{
+                  padding: '0.25rem 0.75rem',
+                  borderRadius: '9999px',
+                  fontSize: '0.75rem',
+                  fontWeight: '500',
                   backgroundColor: theme.colors.success + '20',
                   color: theme.colors.success,
                 }}
@@ -256,8 +407,11 @@ const ThemeSelector = () => {
                 Success
               </span>
               <span
-                className="px-3 py-1 rounded-full text-xs font-medium"
                 style={{
+                  padding: '0.25rem 0.75rem',
+                  borderRadius: '9999px',
+                  fontSize: '0.75rem',
+                  fontWeight: '500',
                   backgroundColor: theme.colors.error + '20',
                   color: theme.colors.error,
                 }}
@@ -275,28 +429,50 @@ const ThemeSelector = () => {
 // Color Picker Component
 const ColorPicker = ({ label, description, value, onChange }) => {
   return (
-    <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
-      <div className="flex items-center justify-between mb-2">
-        <div>
-          <p className="text-sm font-medium text-gray-800">{label}</p>
-          <p className="text-xs text-gray-500">{description}</p>
-        </div>
+    <div style={{
+      backgroundColor: darkTheme.bgTertiary,
+      borderRadius: '0.75rem',
+      padding: '1rem',
+      border: `1px solid ${darkTheme.border}`
+    }}>
+      <div style={{ marginBottom: '0.75rem' }}>
+        <p style={{ fontSize: '0.875rem', fontWeight: '500', color: darkTheme.textPrimary, margin: 0 }}>
+          {label}
+        </p>
+        <p style={{ fontSize: '0.75rem', color: darkTheme.textSecondary, margin: 0 }}>
+          {description}
+        </p>
       </div>
-      <div className="flex items-center gap-3 mt-3">
-        <div className="relative">
-          <input
-            type="color"
-            value={value}
-            onChange={(e) => onChange(e.target.value)}
-            className="w-12 h-12 rounded-lg cursor-pointer border-2 border-gray-200 hover:border-gray-300 transition-colors"
-            style={{ padding: 0 }}
-          />
-        </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+        <input
+          type="color"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          style={{
+            width: '3rem',
+            height: '3rem',
+            borderRadius: '0.5rem',
+            cursor: 'pointer',
+            border: `2px solid ${darkTheme.border}`,
+            padding: 0,
+            backgroundColor: 'transparent',
+          }}
+        />
         <input
           type="text"
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="flex-1 px-3 py-2 text-sm font-mono bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          style={{
+            flex: 1,
+            padding: '0.5rem 0.75rem',
+            fontSize: '0.875rem',
+            fontFamily: 'monospace',
+            backgroundColor: darkTheme.bgSecondary,
+            border: `1px solid ${darkTheme.border}`,
+            borderRadius: '0.5rem',
+            color: darkTheme.textPrimary,
+            outline: 'none',
+          }}
         />
       </div>
     </div>

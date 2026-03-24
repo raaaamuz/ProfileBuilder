@@ -65,11 +65,28 @@ const AdminProfile = () => {
 
   const bioTextareaRef = useRef(null);
 
-  // Update live preview whenever profile changes
+  /**
+   * UPDATE LIVE PREVIEW - PROFILE PICTURE HANDLING
+   * ===============================================
+   * IMPORTANT: Both profile_picture and profile_picture_preview must be passed:
+   * - profile_picture: The saved image URL from backend (for fallback)
+   * - profile_picture_preview: Current preview image (saved URL or new base64 upload)
+   *
+   * profilePicturePreview state contains:
+   * - Saved image URL when profile loads from API
+   * - Base64 data URL when user selects a new image
+   *
+   * Template components use: displayImage = profile_picture_preview || profile_picture
+   * DO NOT MODIFY THIS WITHOUT UNDERSTANDING THE FULL FLOW
+   * ===============================================
+   */
   useEffect(() => {
     updateLiveProfile({
       ...profile,
+      // Pass the preview image (could be saved URL or new base64 upload)
       profile_picture_preview: profilePicturePreview,
+      // Also pass as profile_picture for templates that use it directly
+      profile_picture: profilePicturePreview,
       name: profile.display_name || 'Your Name',
     });
   }, [profile, profilePicturePreview, updateLiveProfile]);
@@ -96,13 +113,13 @@ const AdminProfile = () => {
             setCvPreview(cvFilename);
           }
 
-          // Also fetch home content to get display name (title)
+          // Also fetch home content to get display name (title) and social links
           api.get('/home/')
             .then(homeResponse => {
               const homeTitle = homeResponse.data?.title || '';
               const displayName = (homeTitle && !homeTitle.toLowerCase().includes('welcome')) ? homeTitle : '';
 
-              api.get('/api/social-media/')
+              api.get('/home/social-media/')
                 .then(socialResponse => {
                   const socialMedia = socialResponse.data.social_media || {};
                   setProfile({
@@ -144,7 +161,7 @@ const AdminProfile = () => {
             })
             .catch(err => {
               console.log("Error fetching home data:", err);
-              api.get('/api/social-media/')
+              api.get('/home/social-media/')
                 .then(socialResponse => {
                   const socialMedia = socialResponse.data.social_media || {};
                   setProfile({
@@ -220,18 +237,14 @@ const AdminProfile = () => {
           headers: { 'Content-Type': 'multipart/form-data' },
         });
 
-        // Save display name and social media links to home endpoint
-        const homeFormData = new FormData();
+        // Save display name to home endpoint (social links are managed in AdminHome)
         if (profile.display_name) {
+          const homeFormData = new FormData();
           homeFormData.append('title', profile.display_name);
+          await api.post('/home/update/', homeFormData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+          });
         }
-        homeFormData.append('facebook_link', profile.facebook || '');
-        homeFormData.append('twitter_link', profile.twitter || '');
-        homeFormData.append('linkedin_link', profile.linkedin || '');
-
-        await api.post('/home/update/', homeFormData, {
-          headers: { 'Content-Type': 'multipart/form-data' },
-        });
 
         setLastSaved(new Date());
       } catch (error) {
@@ -243,7 +256,7 @@ const AdminProfile = () => {
 
     const timeoutId = setTimeout(saveData, 1000);
     return () => clearTimeout(timeoutId);
-  }, [profile.display_name, profile.email, profile.phone, profile.location, profile.job_title, profile.years_experience, profile.bio, profile.facebook, profile.twitter, profile.linkedin]);
+  }, [profile.display_name, profile.email, profile.phone, profile.location, profile.job_title, profile.years_experience, profile.bio]);
 
   const handleFileChange = async (e) => {
     const { name, files } = e.target;
@@ -508,7 +521,7 @@ const AdminProfile = () => {
             </div>
             <div className="flex flex-col md:col-span-2">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                <label htmlFor="bio" style={{ margin: 0 }}>Bio</label>
+                <label htmlFor="bio" className="text-lg font-semibold text-gray-700" style={{ margin: 0 }}>Bio</label>
                 <button
                   type="button"
                   onClick={handleImproveBio}
@@ -593,7 +606,7 @@ const AdminProfile = () => {
 
           <div className="space-y-4 mb-6">
             <div>
-              <label>Profile Picture</label>
+              <label className="text-lg font-semibold text-gray-700 mb-1">Profile Picture</label>
               <div className="flex items-center gap-3">
                 <input
                   type="file"
@@ -609,7 +622,7 @@ const AdminProfile = () => {
               </div>
             </div>
             <div>
-              <label>CV</label>
+              <label className="text-lg font-semibold text-gray-700 mb-1">CV</label>
               <div className="flex items-center gap-3">
                 <input
                   type="file"
@@ -621,31 +634,6 @@ const AdminProfile = () => {
                   <span style={{ color: '#94a3b8', fontSize: '12px' }} className="truncate max-w-[150px]" title={cvPreview}>
                     {cvPreview}
                   </span>
-                )}
-                {cvPreview && (
-                  <button
-                    type="button"
-                    onClick={handleParseCV}
-                    disabled={isParsingCV}
-                    className="px-3 py-1.5 text-xs font-medium rounded-md transition-all"
-                    style={{
-                      background: isParsingCV ? '#334155' : 'linear-gradient(135deg, #8b5cf6 0%, #6366f1 50%, #3b82f6 100%)',
-                      color: '#fff',
-                      border: 'none',
-                      cursor: isParsingCV ? 'not-allowed' : 'pointer',
-                      opacity: isParsingCV ? 0.7 : 1,
-                    }}
-                  >
-                    {isParsingCV ? (
-                      <span className="flex items-center gap-1">
-                        <Loader2 size={12} className="animate-spin" /> Parsing...
-                      </span>
-                    ) : (
-                      <span className="flex items-center gap-1">
-                        <Sparkles size={12} /> AI Auto-Fill
-                      </span>
-                    )}
-                  </button>
                 )}
               </div>
               {parseMessage && (

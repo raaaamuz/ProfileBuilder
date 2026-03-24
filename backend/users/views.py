@@ -205,6 +205,34 @@ def get_username(request):
     return Response({"username": user.username})
 
 
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_account_info(request):
+    """Return full account info including registration date"""
+    user = request.user
+    from profiles.models import UserProfile
+
+    profile = UserProfile.objects.filter(user=user).first()
+
+    return Response({
+        "username": user.username,
+        "email": user.email,
+        "first_name": user.first_name,
+        "last_name": user.last_name,
+        "full_name": f"{user.first_name} {user.last_name}".strip() or user.username,
+        "date_joined": user.date_joined.isoformat(),
+        "last_login": user.last_login.isoformat() if user.last_login else None,
+        "is_verified": user.is_email_verified if hasattr(user, 'is_email_verified') else True,
+        "profile": {
+            "phone": profile.phone if profile else None,
+            "location": profile.location if profile else None,
+            "bio": profile.bio if profile else None,
+            "cv_uploaded": bool(profile.cv) if profile else False,
+            "onboarding_completed": profile.onboarding_completed if profile else False,
+        } if profile else None
+    })
+
+
 @api_view(["POST"])
 def login(request):
     """Handles user login and returns an access token"""
@@ -451,4 +479,27 @@ def admin_dashboard(request):
         'login_trend': list(login_trend),
         'recent_users': list(recent_users),
         'frequent_users': list(frequent_users),
+    })
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def activate_all_users_dev(request):
+    """
+    DEV ONLY: Activate all users without email verification.
+    Only works when DEBUG=True.
+    """
+    if not django_settings.DEBUG:
+        return Response({
+            "error": "This endpoint is only available in development mode."
+        }, status=status.HTTP_403_FORBIDDEN)
+
+    # Activate all inactive/unverified users
+    updated_count = User.objects.filter(is_active=False).update(is_active=True)
+    verified_count = User.objects.filter(is_email_verified=False).update(is_email_verified=True)
+
+    return Response({
+        "message": f"Development mode: Activated {updated_count} users, verified {verified_count} emails.",
+        "activated": updated_count,
+        "verified": verified_count,
     })

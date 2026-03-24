@@ -62,7 +62,8 @@ def update_home_content(request):
 @api_view(['GET'])
 @permission_classes([permissions.IsAuthenticated])
 def get_user_home(request):
-    home_content, _ = HomePageContent.objects.get_or_create(user=request.user)
+    home_content, created = HomePageContent.objects.get_or_create(user=request.user)
+    print(f"[Home API] User: {request.user.username}, Created: {created}, Title: '{home_content.title}', Description: '{home_content.description[:50] if home_content.description else ''}...'")
     serializer = HomePageContentSerializer(home_content)
     return Response(serializer.data)
 

@@ -184,16 +184,26 @@ const BlogContentManager = () => {
     }
   
     try {
+      let savedPost;
       if (editingPostId) {
         const response = await api.put(`/blog/posts/${editingPostId}/`, formData);
-        const updatedPost = response.data;
-        setPosts(posts.map((post) => (post.id === editingPostId ? updatedPost : post)));
+        savedPost = response.data;
+        const updatedPosts = posts.map((post) => (post.id === editingPostId ? savedPost : post));
+        setPosts(updatedPosts);
+        updateLiveBlogList(updatedPosts);
         setEditingPostId(null);
       } else {
         const response = await api.post("/blog/posts/", formData);
-        const savedPost = response.data;
-        setPosts([savedPost, ...posts]);
+        savedPost = response.data;
+        const updatedPosts = [savedPost, ...posts];
+        setPosts(updatedPosts);
+        updateLiveBlogList(updatedPosts);
       }
+
+      // Show newly published/updated post in preview
+      updateLiveBlog(savedPost);
+      setSelectedPreviewId(savedPost.id);
+
       // Reset form fields
       setTitle("");
       setCategory("");
@@ -205,6 +215,9 @@ const BlogContentManager = () => {
       setCustomQuery("");
       setApiPage(1);
       setLocalPexelsPage(1);
+
+      // Switch to posts tab to show the published post
+      setActiveTab("posts");
     } catch (error) {
       console.error("Error saving blog post:", error);
     }
@@ -251,17 +264,28 @@ const BlogContentManager = () => {
 
   const getCategoryStyle = (cat) => categoryColors[cat] || { bg: 'bg-gray-100', text: 'text-gray-700', border: 'border-gray-200' };
 
+  // Dark theme colors
+  const theme = {
+    bgPrimary: '#0f172a',
+    bgSecondary: '#1e293b',
+    bgTertiary: '#334155',
+    textPrimary: '#f8fafc',
+    textSecondary: '#94a3b8',
+    accent: '#10b981',
+    border: '#334155',
+  };
+
   return (
-    <div className="min-h-screen bg-gray-100 p-6">
+    <div className="p-6" style={{ backgroundColor: 'transparent' }}>
       {/* Header */}
       <div className="text-center mb-6">
-        <h1 className="text-3xl font-extrabold text-gray-800">Blog Manager</h1>
-        <p className="mt-1 text-gray-600">Create and manage your blog posts, stories, and projects</p>
+        <h1 className="text-2xl font-bold" style={{ color: theme.textPrimary }}>Blog Manager</h1>
+        <p className="mt-1 text-sm" style={{ color: theme.textSecondary }}>Create and manage your blog posts, stories, and projects</p>
       </div>
 
-      <div className="w-full max-w-4xl mx-auto bg-white p-6 rounded-xl shadow-lg">
+      <div className="w-full max-w-4xl mx-auto p-5 rounded-xl" style={{ backgroundColor: theme.bgSecondary, border: `1px solid ${theme.border}` }}>
         {/* Tab Navigation */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-2 mb-6">
+        <div className="rounded-lg p-1 mb-5" style={{ backgroundColor: theme.bgPrimary }}>
           <div className="flex gap-2">
             {formTabs.map((tab) => {
               const Icon = tab.icon;
@@ -270,23 +294,30 @@ const BlogContentManager = () => {
                 <button
                   key={tab.key}
                   onClick={() => setActiveTab(tab.key)}
+                  className="flex-1 flex items-center justify-center gap-3 px-4 py-3 rounded-lg transition-all duration-200"
                   style={isActive ? {
                     background: 'linear-gradient(to right, #10b981, #14b8a6)',
                     color: '#ffffff',
-                    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
                   } : {
-                    color: '#1f2937',
+                    color: theme.textSecondary,
                     backgroundColor: 'transparent'
                   }}
-                  className="flex-1 flex items-center justify-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 hover:bg-gray-100"
+                  onMouseOver={(e) => !isActive && (e.currentTarget.style.backgroundColor = theme.bgTertiary)}
+                  onMouseOut={(e) => !isActive && (e.currentTarget.style.backgroundColor = 'transparent')}
                 >
                   <Icon size={20} />
                   <div className="text-left">
-                    <div className="font-semibold">{tab.label}</div>
-                    {!isActive && <div className="text-xs opacity-70">{tab.description}</div>}
+                    <div className="font-semibold" style={{ color: isActive ? '#ffffff' : theme.textPrimary }}>{tab.label}</div>
+                    <div className="text-xs" style={{ color: isActive ? 'rgba(255,255,255,0.8)' : theme.textSecondary }}>{tab.description}</div>
                   </div>
                   {tab.key === "posts" && posts.length > 0 && (
-                    <span className={`ml-2 px-2 py-0.5 text-xs font-medium rounded-full ${isActive ? 'bg-white/20' : 'bg-emerald-100 text-emerald-700'}`}>
+                    <span
+                      className="ml-2 px-2 py-0.5 text-xs font-medium rounded-full"
+                      style={{
+                        backgroundColor: isActive ? 'rgba(255,255,255,0.2)' : 'rgba(16, 185, 129, 0.2)',
+                        color: isActive ? '#ffffff' : '#10b981'
+                      }}
+                    >
                       {posts.length}
                     </span>
                   )}
@@ -298,42 +329,44 @@ const BlogContentManager = () => {
 
         {/* Create/Edit Post Tab */}
         {activeTab === "create" && (
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-200 flex items-center gap-2">
+          <div className="rounded-xl overflow-hidden" style={{ backgroundColor: theme.bgTertiary, border: `1px solid ${theme.border}` }}>
+            <div className="px-5 py-4 flex items-center gap-2" style={{ borderBottom: `1px solid ${theme.border}` }}>
               {editingPostId ? (
                 <>
-                  <Edit3 className="text-amber-600" size={20} />
-                  <h2 className="text-lg font-semibold text-gray-800">Edit Post</h2>
+                  <Edit3 style={{ color: '#f59e0b' }} size={20} />
+                  <h2 className="text-base font-semibold" style={{ color: theme.textPrimary }}>Edit Post</h2>
                 </>
               ) : (
                 <>
-                  <Plus className="text-emerald-600" size={20} />
-                  <h2 className="text-lg font-semibold text-gray-800">New Post</h2>
+                  <Plus style={{ color: theme.accent }} size={20} />
+                  <h2 className="text-base font-semibold" style={{ color: theme.textPrimary }}>New Post</h2>
                 </>
               )}
             </div>
 
-            <form onSubmit={handleSubmit} className="p-6 space-y-5">
+            <form onSubmit={handleSubmit} className="p-5 space-y-4">
               {/* Title & Category Row */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Title</label>
+                  <label className="block text-sm font-medium mb-2" style={{ color: theme.textSecondary }}>Title</label>
                   <input
                     type="text"
                     placeholder="Enter blog title..."
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     required
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 transition-all outline-none"
+                    className="w-full px-4 py-2.5 rounded-lg transition-all outline-none"
+                    style={{ backgroundColor: theme.bgSecondary, border: `1px solid ${theme.border}`, color: theme.textPrimary }}
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+                  <label className="block text-sm font-medium mb-2" style={{ color: theme.textSecondary }}>Category</label>
                   <select
                     value={category}
                     onChange={(e) => setCategory(e.target.value)}
                     required
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 transition-all outline-none bg-white"
+                    className="w-full px-4 py-2.5 rounded-lg transition-all outline-none"
+                    style={{ backgroundColor: theme.bgSecondary, border: `1px solid ${theme.border}`, color: theme.textPrimary }}
                   >
                     <option value="">Select Category</option>
                     <option value="Blogs">Blogs</option>
@@ -345,7 +378,7 @@ const BlogContentManager = () => {
 
               {/* Content Rich Text Editor */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Content</label>
+                <label className="block text-sm font-medium mb-2" style={{ color: theme.textSecondary }}>Content</label>
                 <RichTextEditor
                   content={content}
                   onChange={setContent}
@@ -358,19 +391,20 @@ const BlogContentManager = () => {
               <div className="grid grid-cols-2 gap-4">
                 {/* Image Upload */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium mb-2" style={{ color: theme.textSecondary }}>
                     <div className="flex items-center gap-2">
                       <Image size={16} />
                       Featured Image
                     </div>
                   </label>
                   <label
-                    className="cursor-pointer flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-300 hover:border-emerald-400 bg-gray-50 hover:bg-emerald-50 p-4 transition-all h-32"
+                    className="cursor-pointer flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-4 transition-all h-32"
+                    style={{ borderColor: theme.border, backgroundColor: theme.bgSecondary }}
                     htmlFor="dropzone-file"
                   >
-                    <Upload className="w-6 h-6 text-gray-400 mb-1" />
-                    <p className="text-sm font-medium text-gray-600">Upload image</p>
-                    <p className="text-xs text-gray-400">PNG, JPG, GIF up to 10MB</p>
+                    <Upload className="w-6 h-6 mb-1" style={{ color: theme.textSecondary }} />
+                    <p className="text-sm font-medium" style={{ color: theme.textPrimary }}>Upload image</p>
+                    <p className="text-xs" style={{ color: theme.textSecondary }}>PNG, JPG, GIF up to 10MB</p>
                     <input
                       id="dropzone-file"
                       type="file"
@@ -383,9 +417,9 @@ const BlogContentManager = () => {
 
                 {/* Image Preview */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Preview</label>
+                  <label className="block text-sm font-medium mb-2" style={{ color: theme.textSecondary }}>Preview</label>
                   {imagePreview ? (
-                    <div className="relative h-32 rounded-xl overflow-hidden border-2 border-gray-200">
+                    <div className="relative h-32 rounded-lg overflow-hidden" style={{ border: `2px solid ${theme.border}` }}>
                       <img
                         src={imagePreview}
                         alt="Preview"
@@ -404,7 +438,7 @@ const BlogContentManager = () => {
                       </button>
                     </div>
                   ) : (
-                    <div className="h-32 rounded-xl border-2 border-dashed border-gray-200 flex items-center justify-center text-gray-400 text-sm">
+                    <div className="h-32 rounded-lg border-2 border-dashed flex items-center justify-center text-sm" style={{ borderColor: theme.border, color: theme.textSecondary }}>
                       No image selected
                     </div>
                   )}
@@ -413,7 +447,7 @@ const BlogContentManager = () => {
 
               {/* Loading indicator */}
               {pexelsLoading && (
-                <div className="flex items-center justify-center py-4 text-gray-500">
+                <div className="flex items-center justify-center py-4" style={{ color: theme.textSecondary }}>
                   <Loader2 className="animate-spin mr-2" size={18} />
                   <span className="text-sm">Searching for images...</span>
                 </div>
@@ -423,11 +457,11 @@ const BlogContentManager = () => {
               {pexelsImages.length > 0 && (
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                    <h3 className="text-sm font-medium flex items-center gap-2" style={{ color: theme.textSecondary }}>
                       <Search size={14} />
                       Suggested Images from Pexels
                     </h3>
-                    <span className="text-xs text-gray-400">
+                    <span className="text-xs" style={{ color: theme.textSecondary }}>
                       Page {localPexelsPage}/{totalLocalPages}
                     </span>
                   </div>
@@ -439,11 +473,10 @@ const BlogContentManager = () => {
                         whileTap={{ scale: 0.95 }}
                         src={photo.src.small}
                         alt={photo.photographer}
-                        className={`cursor-pointer rounded-lg aspect-square object-cover border-2 transition-all ${
-                          selectedPexelsPhoto && selectedPexelsPhoto.id === photo.id
-                            ? "border-emerald-500 ring-2 ring-emerald-200"
-                            : "border-transparent hover:border-gray-300"
-                        }`}
+                        className="cursor-pointer rounded-lg aspect-square object-cover border-2 transition-all"
+                        style={{
+                          borderColor: selectedPexelsPhoto && selectedPexelsPhoto.id === photo.id ? theme.accent : 'transparent'
+                        }}
                         onClick={() => handlePexelsImageSelect(photo)}
                       />
                     ))}
@@ -454,7 +487,8 @@ const BlogContentManager = () => {
                         type="button"
                         onClick={() => setLocalPexelsPage((prev) => Math.max(prev - 1, 1))}
                         disabled={localPexelsPage === 1}
-                        className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 disabled:opacity-50 transition-all"
+                        className="p-2 rounded-lg disabled:opacity-50 transition-all"
+                        style={{ backgroundColor: theme.bgSecondary, color: theme.textPrimary }}
                       >
                         <ChevronLeft size={16} />
                       </button>
@@ -462,7 +496,8 @@ const BlogContentManager = () => {
                         type="button"
                         onClick={() => setLocalPexelsPage((prev) => Math.min(prev + 1, totalLocalPages))}
                         disabled={localPexelsPage === totalLocalPages}
-                        className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 disabled:opacity-50 transition-all"
+                        className="p-2 rounded-lg disabled:opacity-50 transition-all"
+                        style={{ backgroundColor: theme.bgSecondary, color: theme.textPrimary }}
                       >
                         <ChevronRight size={16} />
                       </button>
@@ -472,11 +507,11 @@ const BlogContentManager = () => {
               )}
 
               {/* Action Buttons */}
-              <div className="flex gap-3 pt-4 border-t border-gray-200">
+              <div className="flex gap-3 pt-4" style={{ borderTop: `1px solid ${theme.border}` }}>
                 <button
                   type="submit"
                   style={{ background: 'linear-gradient(to right, #10b981, #14b8a6)' }}
-                  className="flex-1 py-3 px-4 text-white font-semibold rounded-xl hover:opacity-90 transition-all shadow-lg flex items-center justify-center gap-2"
+                  className="flex-1 py-2.5 px-4 text-white font-semibold rounded-lg hover:opacity-90 transition-all flex items-center justify-center gap-2"
                 >
                   {editingPostId ? (
                     <>
@@ -494,7 +529,8 @@ const BlogContentManager = () => {
                   <button
                     type="button"
                     onClick={handleCancelEdit}
-                    className="px-6 py-3 bg-gray-100 text-gray-700 font-semibold rounded-xl hover:bg-gray-200 transition-all flex items-center gap-2"
+                    className="px-6 py-2.5 font-semibold rounded-lg transition-all flex items-center gap-2"
+                    style={{ backgroundColor: theme.bgSecondary, color: theme.textPrimary }}
                   >
                     <X size={18} />
                     Cancel
@@ -507,35 +543,35 @@ const BlogContentManager = () => {
 
         {/* Published Posts Tab */}
         {activeTab === "posts" && (
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+          <div className="rounded-xl overflow-hidden" style={{ backgroundColor: theme.bgTertiary, border: `1px solid ${theme.border}` }}>
+            <div className="px-5 py-4 flex items-center justify-between" style={{ borderBottom: `1px solid ${theme.border}` }}>
               <div className="flex items-center gap-2">
-                <List className="text-emerald-600" size={20} />
-                <h2 className="text-lg font-semibold text-gray-800">Published Posts</h2>
+                <List style={{ color: theme.accent }} size={20} />
+                <h2 className="text-base font-semibold" style={{ color: theme.textPrimary }}>Published Posts</h2>
               </div>
-              <span className="px-3 py-1 bg-emerald-100 text-emerald-700 text-sm font-medium rounded-full">
+              <span className="px-3 py-1 text-sm font-medium rounded-full" style={{ backgroundColor: 'rgba(16, 185, 129, 0.2)', color: theme.accent }}>
                 {posts.length} {posts.length === 1 ? 'post' : 'posts'}
               </span>
             </div>
 
-            <div className="p-6">
+            <div className="p-5">
               {posts.length === 0 ? (
                 <div className="text-center py-12">
-                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <FileText className="w-8 h-8 text-gray-400" />
+                  <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: theme.bgSecondary }}>
+                    <FileText className="w-8 h-8" style={{ color: theme.textSecondary }} />
                   </div>
-                  <h3 className="text-lg font-medium text-gray-800 mb-1">No posts yet</h3>
-                  <p className="text-gray-500 text-sm mb-4">Create your first blog post to get started</p>
+                  <h3 className="text-lg font-medium mb-1" style={{ color: theme.textPrimary }}>No posts yet</h3>
+                  <p className="text-sm mb-4" style={{ color: theme.textSecondary }}>Create your first blog post to get started</p>
                   <button
                     onClick={() => setActiveTab("create")}
                     style={{ background: 'linear-gradient(to right, #10b981, #14b8a6)' }}
-                    className="px-6 py-2 text-white font-medium rounded-xl hover:opacity-90 transition-all"
+                    className="px-6 py-2 text-white font-medium rounded-lg hover:opacity-90 transition-all"
                   >
                     Create Post
                   </button>
                 </div>
               ) : (
-                <div className="grid gap-4 max-h-[500px] overflow-y-auto">
+                <div className="grid gap-3 max-h-[500px] overflow-y-auto">
                   <AnimatePresence>
                     {posts.map((post, index) => (
                       <motion.div
@@ -545,13 +581,11 @@ const BlogContentManager = () => {
                         exit={{ opacity: 0, x: -20 }}
                         transition={{ delay: index * 0.05 }}
                         onClick={() => handlePreviewSelect(post)}
-                        className={`group relative flex gap-4 p-4 rounded-xl border transition-all hover:shadow-md cursor-pointer ${
-                          selectedPreviewId === post.id
-                            ? 'border-emerald-400 bg-emerald-50 ring-2 ring-emerald-200'
-                            : editingPostId === post.id
-                              ? 'border-amber-300 bg-amber-50'
-                              : 'border-gray-200 hover:border-gray-300 bg-white'
-                        }`}
+                        className="group relative flex gap-4 p-4 rounded-lg transition-all cursor-pointer"
+                        style={{
+                          backgroundColor: selectedPreviewId === post.id ? 'rgba(16, 185, 129, 0.1)' : theme.bgSecondary,
+                          border: `1px solid ${selectedPreviewId === post.id ? theme.accent : theme.border}`
+                        }}
                       >
                         {/* Image */}
                         <div className="flex-shrink-0">
@@ -559,11 +593,11 @@ const BlogContentManager = () => {
                             <img
                               src={post.image}
                               alt={post.title}
-                              className="w-24 h-24 rounded-lg object-cover"
+                              className="w-20 h-20 rounded-lg object-cover"
                             />
                           ) : (
-                            <div className="w-24 h-24 rounded-lg bg-gray-100 flex items-center justify-center">
-                              <Image className="w-8 h-8 text-gray-300" />
+                            <div className="w-20 h-20 rounded-lg flex items-center justify-center" style={{ backgroundColor: theme.bgTertiary }}>
+                              <Image className="w-8 h-8" style={{ color: theme.textSecondary }} />
                             </div>
                           )}
                         </div>
@@ -571,17 +605,18 @@ const BlogContentManager = () => {
                         {/* Content */}
                         <div className="flex-1 min-w-0">
                           <div className="flex items-start justify-between gap-2 mb-1">
-                            <h3 className="font-semibold text-gray-800 text-lg">
+                            <h3 className="font-semibold text-base" style={{ color: theme.textPrimary }}>
                               {post.title}
                             </h3>
-                            <span className={`flex-shrink-0 px-2 py-0.5 text-xs font-medium rounded-full ${getCategoryStyle(post.category).bg} ${getCategoryStyle(post.category).text}`}>
+                            <span className="flex-shrink-0 px-2 py-0.5 text-xs font-medium rounded-full" style={{ backgroundColor: 'rgba(16, 185, 129, 0.2)', color: theme.accent }}>
                               {post.category}
                             </span>
                           </div>
-                          <p className="text-sm text-gray-500 line-clamp-2 mb-2"
+                          <p className="text-sm line-clamp-2 mb-2"
+                             style={{ color: theme.textSecondary }}
                              dangerouslySetInnerHTML={{ __html: post.content.slice(0, 150) + '...' }}
                           />
-                          <div className="flex items-center gap-4 text-xs text-gray-400">
+                          <div className="flex items-center gap-4 text-xs" style={{ color: theme.textSecondary }}>
                             <span className="flex items-center gap-1">
                               <Calendar size={12} />
                               {new Date(post.created_at || Date.now()).toLocaleDateString()}
@@ -591,7 +626,7 @@ const BlogContentManager = () => {
 
                         {/* Preview indicator */}
                         {selectedPreviewId === post.id && (
-                          <div className="absolute top-2 right-2 flex items-center gap-1 px-2 py-1 bg-emerald-500 text-white text-xs font-medium rounded-full">
+                          <div className="absolute top-2 right-2 flex items-center gap-1 px-2 py-1 text-white text-xs font-medium rounded-full" style={{ backgroundColor: theme.accent }}>
                             <Eye size={12} />
                             Preview
                           </div>
@@ -601,14 +636,16 @@ const BlogContentManager = () => {
                         <div className="flex flex-col gap-2">
                           <button
                             onClick={(e) => { e.stopPropagation(); handleEditClick(post); }}
-                            className="p-2 rounded-lg bg-emerald-100 text-emerald-600 hover:bg-emerald-200 transition-all"
+                            className="p-2 rounded-lg transition-all"
+                            style={{ backgroundColor: 'rgba(16, 185, 129, 0.2)', color: theme.accent }}
                             title="Edit"
                           >
                             <Edit3 size={16} />
                           </button>
                           <button
                             onClick={(e) => { e.stopPropagation(); handleDelete(post.id); }}
-                            className="p-2 rounded-lg bg-red-100 text-red-600 hover:bg-red-200 transition-all"
+                            className="p-2 rounded-lg transition-all"
+                            style={{ backgroundColor: 'rgba(239, 68, 68, 0.2)', color: '#ef4444' }}
                             title="Delete"
                           >
                             <Trash2 size={16} />

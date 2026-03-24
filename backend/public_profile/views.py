@@ -163,6 +163,8 @@ class PublicProfileAggregateView(APIView):
             "linkedinLink": home_data.get("linkedin_link", ""),
             "facebookLink": home_data.get("facebook_link", ""),
             "twitterLink": home_data.get("twitter_link", ""),
+            "githubLink": home_data.get("github_link", ""),
+            "instagramLink": home_data.get("instagram_link", ""),
             "customSettings": home_data.get("custom_settings", {}),
             "title": home_data.get("title", ""),
             "userProfile": profile_data,
@@ -266,3 +268,23 @@ class PublicProfileAggregateViewResume(APIView):
         except Exception as e:
             print(f"Error generating HTML resume with Claude: {e}")
             return Response({"error": f"Failed to generate HTML resume: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class PublicSettingsView(APIView):
+    """
+    Get a user's public settings (layout preferences) without authentication
+    """
+    permission_classes = []  # Allow public access
+
+    def get(self, request, username):
+        user = get_object_or_404(User, username__iexact=username)
+
+        try:
+            tab_settings = UserTabSettings.objects.get(user=user)
+            return Response({
+                "settings": tab_settings.settings
+            })
+        except UserTabSettings.DoesNotExist:
+            return Response({
+                "settings": {}
+            })

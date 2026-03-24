@@ -28,7 +28,8 @@ const SkillsSection = ({ isAdminPreview = false }) => {
   const [selectedSkill, setSelectedSkill] = useState(null);
   const [designConfig, setDesignConfig] = useState(null);
 
-  const isInAdminPreview = isAdminPreview || (!username && window.location.pathname.includes('/dashboard/'));
+  // Force admin preview detection from both prop and URL
+  const isInAdminPreview = isAdminPreview || window.location.pathname.includes('/dashboard/');
 
   useEffect(() => {
     if (isInAdminPreview && liveSkillsData && liveSkillsData.length > 0) {
@@ -79,14 +80,6 @@ const SkillsSection = ({ isAdminPreview = false }) => {
   // Use live design from admin preview context if available
   const activeDesign = isInAdminPreview && liveSkillsDesign ? liveSkillsDesign : designConfig;
 
-  // Debug: log design sources
-  console.log('SkillsSection Debug:', {
-    isInAdminPreview,
-    liveSkillsDesign,
-    designConfig,
-    activeDesign,
-  });
-
   if (!loading && skills.length === 0) {
     return null;
   }
@@ -130,10 +123,6 @@ const SkillsSection = ({ isAdminPreview = false }) => {
   const layoutType = rawLayoutType === 'cards-grid' ? 'cards' : rawLayoutType;
   const cardStyle = activeDesign?.cardStyle || 'elevated';
 
-  // Debug logging - remove after confirming it works
-  console.log('Skills Design Config:', activeDesign);
-  console.log('Layout Type:', layoutType);
-
   // Helper to get skill proficiency normalized
   const getSkillProficiency = (skill) => {
     const rawProficiency = Number(skill.proficiency);
@@ -145,7 +134,7 @@ const SkillsSection = ({ isAdminPreview = false }) => {
 
   // ===== CARDS LAYOUT =====
   const renderCardsLayout = () => (
-    <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div className={`grid gap-6 ${isInAdminPreview ? 'grid-cols-1 sm:grid-cols-2' : 'sm:grid-cols-2 lg:grid-cols-3'}`}>
       {skills.map((skill, index) => {
         const catKey = skill.category?.toLowerCase() || 'other';
         const config = categoryConfig[catKey] || categoryConfig.other;
@@ -325,7 +314,7 @@ const SkillsSection = ({ isAdminPreview = false }) => {
 
   // ===== LIST LAYOUT =====
   const renderListLayout = () => (
-    <div className="max-w-3xl mx-auto space-y-4">
+    <div className={isInAdminPreview ? 'w-full space-y-4' : 'max-w-3xl mx-auto space-y-4'}>
       {skills.map((skill, index) => {
         const catKey = skill.category?.toLowerCase() || 'other';
         const config = categoryConfig[catKey] || categoryConfig.other;
@@ -476,7 +465,7 @@ const SkillsSection = ({ isAdminPreview = false }) => {
 
   // ===== CIRCULAR LAYOUT =====
   const renderCircularLayout = () => (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-6 justify-items-center">
+    <div className={`grid gap-6 justify-items-center ${isInAdminPreview ? 'grid-cols-2 sm:grid-cols-3' : 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4'}`}>
       {skills.map((skill, index) => {
         const catKey = skill.category?.toLowerCase() || 'other';
         const config = categoryConfig[catKey] || categoryConfig.other;
@@ -575,10 +564,10 @@ const SkillsSection = ({ isAdminPreview = false }) => {
 
   return (
     <div
-      className="py-16 transition-colors duration-300"
-      style={{ backgroundColor: bgColor }}
+      className="py-16 transition-colors duration-300 w-full"
+      style={{ backgroundColor: bgColor, minWidth: '100%', boxSizing: 'border-box' }}
     >
-      <div className="max-w-6xl mx-auto px-6">
+      <div className={isInAdminPreview ? 'w-full px-4' : 'max-w-6xl mx-auto px-6'}>
         {/* Section Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}

@@ -1,9 +1,15 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaCheck, FaStar, FaRegStar } from 'react-icons/fa';
-import { FileText, Loader2, ArrowRight, Palette, Check } from 'lucide-react';
+import { FileText, Loader2, ArrowRight, Palette, Check, Wrench, Sliders } from 'lucide-react';
 import api from '../../../services/api';
 import { PreviewContext } from '../PreviewContext';
+
+// Tab configuration
+const TABS = [
+  { id: 'skills', label: 'Select Skills', icon: Wrench, description: 'Import from CV or add skills' },
+  { id: 'design', label: 'Design & Proficiency', icon: Sliders, description: 'Style and skill levels' },
+];
 
 // Design presets for skills section
 const SKILLS_DESIGNS = [
@@ -218,12 +224,19 @@ const SkillsDesignPicker = ({ selectedDesign, onSelectDesign }) => {
   );
 };
 
-const SkillsSelection = ({ onNext, updateLiveSkills, savedProficiencies, setSavedProficiencies, savedCategories, setSavedCategories, savedDescriptions, setSavedDescriptions }) => {
+const SkillsSelection = ({ onNext, updateLiveSkills, savedProficiencies, setSavedProficiencies, savedCategories, setSavedCategories, savedDescriptions, setSavedDescriptions, parentSelectedSkills, setParentSelectedSkills }) => {
   const [skills, setSkills] = useState([]);
-  const [selectedSkills, setSelectedSkills] = useState([]);
+  const [selectedSkills, setSelectedSkills] = useState(parentSelectedSkills || []);
   const [customSkill, setCustomSkill] = useState('');
   const [isImporting, setIsImporting] = useState(false);
   const [importMessage, setImportMessage] = useState('');
+
+  // Sync parent state when local selectedSkills changes
+  useEffect(() => {
+    if (setParentSelectedSkills && selectedSkills.length > 0) {
+      setParentSelectedSkills(selectedSkills);
+    }
+  }, [selectedSkills, setParentSelectedSkills]);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -394,14 +407,14 @@ const SkillsSelection = ({ onNext, updateLiveSkills, savedProficiencies, setSave
               onClick={() => toggleSkill(skill)}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-all border shadow-md flex items-center gap-2 ${
                 selectedSkills.includes(skill)
-                  ? 'bg-blue-500 text-white border-blue-500'
-                  : 'bg-gray-100 text-gray-700 border-gray-300'
+                  ? 'bg-blue-600 text-white border-blue-600 hover:bg-blue-700'
+                  : 'bg-slate-700 text-slate-200 border-slate-500 hover:bg-slate-600 hover:border-slate-400'
               }`}
             >
               {selectedSkills.includes(skill) ? (
                 <FaCheck className="text-white" />
               ) : (
-                '+'
+                <span className="text-slate-400">+</span>
               )}{' '}
               {skill}
             </button>
@@ -624,8 +637,8 @@ const ProficiencyForm = ({ selectedSkills, onSubmit, savedProficiencies, savedCa
 
 const SkillForm = () => {
   const navigate = useNavigate();
-  const { updateLiveSkills, updateLiveSkillsDesign } = useContext(PreviewContext);
-  const [step, setStep] = useState(1);
+  const { updateLiveSkills, updateLiveSkillsDesign, registerSectionTabs, clearSectionTabs } = useContext(PreviewContext);
+  const [activeTab, setActiveTab] = useState('skills');
   const [selectedSkills, setSelectedSkills] = useState([]);
   const [savedProficiencies, setSavedProficiencies] = useState({});
   const [savedCategories, setSavedCategories] = useState({});
@@ -633,6 +646,16 @@ const SkillForm = () => {
   const [submissionMessage, setSubmissionMessage] = useState('');
   const [selectedDesign, setSelectedDesign] = useState(SKILLS_DESIGNS[0]);
   const [designSaving, setDesignSaving] = useState(false);
+
+  // Register tabs with PreviewContext for navigation
+  useEffect(() => {
+    if (registerSectionTabs) {
+      registerSectionTabs(['skills', 'design'], activeTab, setActiveTab);
+    }
+    return () => {
+      if (clearSectionTabs) clearSectionTabs();
+    };
+  }, [activeTab, registerSectionTabs, clearSectionTabs]);
 
   // Fetch saved design on mount
   useEffect(() => {
@@ -655,6 +678,36 @@ const SkillForm = () => {
       }
     };
     fetchDesign();
+  }, []);
+
+  // Fetch existing skills on mount
+  useEffect(() => {
+    const fetchSkills = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const response = await api.get('/career/skill/', {
+          headers: { Authorization: `Token ${token}` },
+        });
+        const skillsData = Array.isArray(response.data) ? response.data : response.data.results || [];
+        if (skillsData.length > 0) {
+          setSelectedSkills(skillsData.map(s => s.name));
+          const profs = {};
+          const cats = {};
+          const descs = {};
+          skillsData.forEach(s => {
+            profs[s.name] = s.proficiency || 50;
+            cats[s.name] = s.category || 'other';
+            descs[s.name] = s.description || '';
+          });
+          setSavedProficiencies(profs);
+          setSavedCategories(cats);
+          setSavedDescriptions(descs);
+        }
+      } catch (error) {
+        console.log('No saved skills');
+      }
+    };
+    fetchSkills();
   }, []);
 
   // Handle design selection
@@ -680,10 +733,10 @@ const SkillForm = () => {
     }
   };
 
-  // Move from skills selection to proficiency form
-  const handleNext = (skills) => {
+  // Move from skills selection to design tab
+  const handleSkillsSelected = (skills) => {
     setSelectedSkills(skills);
-    setStep(2);
+    setActiveTab('design');
   };
 
   // Handler for final form submission
@@ -715,7 +768,7 @@ const SkillForm = () => {
 
   return (
     <div className="relative bg-gray-100 p-4 pb-24">
-      {/* Design Picker - Always visible */}
+      {/* Design Picker - Always visible at top */}
       <SkillsDesignPicker
         selectedDesign={selectedDesign}
         onSelectDesign={handleSelectDesign}
@@ -727,9 +780,38 @@ const SkillForm = () => {
         </div>
       )}
 
-      {step === 1 && (
+      {/* Tab Navigation - Clean professional tabs matching AdminHome */}
+      <div className="flex gap-1 mb-5 p-1 rounded-md" style={{ backgroundColor: '#0f172a' }}>
+        {TABS.map((tab) => {
+          const Icon = tab.icon;
+          const isActive = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded text-sm font-medium transition-all duration-150"
+              style={{
+                backgroundColor: isActive ? 'rgba(99, 102, 241, 0.15)' : 'transparent',
+                color: isActive ? '#6366f1' : '#64748b',
+              }}
+            >
+              <Icon size={16} />
+              <span>{tab.label}</span>
+              {tab.id === 'skills' && selectedSkills.length > 0 && (
+                <span className="ml-1 px-1.5 py-0.5 rounded-full text-xs font-bold"
+                  style={{ backgroundColor: isActive ? 'rgba(99, 102, 241, 0.3)' : 'rgba(100, 116, 139, 0.2)' }}>
+                  {selectedSkills.length}
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Tab Content */}
+      {activeTab === 'skills' && (
         <SkillsSelection
-          onNext={handleNext}
+          onNext={handleSkillsSelected}
           updateLiveSkills={updateLiveSkills}
           savedProficiencies={savedProficiencies}
           setSavedProficiencies={setSavedProficiencies}
@@ -737,18 +819,41 @@ const SkillForm = () => {
           setSavedCategories={setSavedCategories}
           savedDescriptions={savedDescriptions}
           setSavedDescriptions={setSavedDescriptions}
+          parentSelectedSkills={selectedSkills}
+          setParentSelectedSkills={setSelectedSkills}
         />
       )}
-      {step === 2 && (
-        <ProficiencyForm
-          selectedSkills={selectedSkills}
-          onSubmit={handleSubmit}
-          savedProficiencies={savedProficiencies}
-          savedCategories={savedCategories}
-          savedDescriptions={savedDescriptions}
-          updateLiveSkills={updateLiveSkills}
-        />
+
+      {activeTab === 'design' && (
+        <>
+          {/* Proficiency Form */}
+          {selectedSkills.length > 0 ? (
+            <ProficiencyForm
+              selectedSkills={selectedSkills}
+              onSubmit={handleSubmit}
+              savedProficiencies={savedProficiencies}
+              savedCategories={savedCategories}
+              savedDescriptions={savedDescriptions}
+              updateLiveSkills={updateLiveSkills}
+            />
+          ) : (
+            <div className="bg-white rounded-xl shadow-lg p-8 text-center">
+              <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Wrench className="w-8 h-8 text-amber-500" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-700 mb-2">No Skills Selected</h3>
+              <p className="text-gray-500 mb-4">Please select your skills first before setting proficiency levels.</p>
+              <button
+                onClick={() => setActiveTab('skills')}
+                className="px-6 py-2 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 transition"
+              >
+                Go to Select Skills
+              </button>
+            </div>
+          )}
+        </>
       )}
+
       {submissionMessage && (
         <div className="max-w-lg mx-auto mt-6 p-6 bg-white shadow-md rounded-xl">
           <h3 className="text-lg font-semibold mb-2">Submission Status</h3>

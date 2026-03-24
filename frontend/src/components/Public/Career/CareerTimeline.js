@@ -6,7 +6,7 @@ import DOMPurify from "dompurify";
 import api from "../../../services/api";
 import { getSubdomainUsername } from "../../../utils/subdomain";
 
-const CareerTimeline = ({ liveDesignConfig, liveCareerData, globalFont }) => {
+const CareerTimeline = ({ liveDesignConfig, liveCareerData, globalFont, isAdminPreview: isAdminPreviewProp }) => {
   const [careerData, setCareerData] = useState([]);
   const [designConfig, setDesignConfig] = useState(null);
   const [selectedCard, setSelectedCard] = useState(null);
@@ -16,8 +16,8 @@ const CareerTimeline = ({ liveDesignConfig, liveCareerData, globalFont }) => {
   const username = urlUsername || subdomainUsername;
   const token = localStorage.getItem("token");
 
-  // Check if we're in admin preview mode
-  const isAdminPreview = !username && window.location.pathname.includes('/dashboard/');
+  // Check if we're in admin preview mode (from prop or URL detection)
+  const isAdminPreview = isAdminPreviewProp !== undefined ? isAdminPreviewProp : (!username && window.location.pathname.includes('/dashboard/'));
 
   // Default design
   const defaultDesign = {
@@ -641,7 +641,7 @@ const CareerTimeline = ({ liveDesignConfig, liveCareerData, globalFont }) => {
       style={containerStyle}
     >
       {glowOverlay}
-      <div className="max-w-5xl mx-auto px-6">
+      <div className={`${isAdminPreview ? 'w-full' : 'max-w-5xl mx-auto'} px-6`}>
         <motion.h1
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}

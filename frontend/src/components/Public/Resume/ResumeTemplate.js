@@ -20,8 +20,11 @@ const ResumeTemplate = forwardRef(({ data, template = "professional" }, ref) => 
     languages,
   } = data;
 
-  // Retrieve the backend base URL from an environment variable
-  const BASE_URL = process.env.REACT_APP_BACKEND_URL || "http://localhost:8000";
+  // ============================================================================
+  // CRITICAL: Use window.location.origin for media URLs
+  // DO NOT use localhost - it breaks production on subdomains!
+  // ============================================================================
+  const BASE_URL = window.location.origin;
 
   // Helper function to check if a string contains HTML tags
   const containsHTML = (str) => /<[^>]+>/.test(str);

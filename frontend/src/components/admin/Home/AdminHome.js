@@ -10,11 +10,12 @@ import SocialMediaLinks from "./SocialMediaLinks";
 import PersonalDetails from "./PersonalDetails";
 import DesignSettings from "./DesignSettings";
 import api from "../../../services/api";
+import TabNavigation from "../common/TabNavigation";
 
 const formTabs = [
-  { label: "Content", key: "Personal Details", icon: Home, description: "Title & description" },
-  { label: "Social Links", key: "Social Media Links", icon: Link2, description: "Connect your profiles" },
-  { label: "Design", key: "Design Settings", icon: Palette, description: "Colors & video" },
+  { id: "Personal Details", label: "Content", icon: Home, description: "Title & description" },
+  { id: "Social Media Links", label: "Social Links", icon: Link2, description: "Connect your profiles" },
+  { id: "Design Settings", label: "Design", icon: Palette, description: "Colors & video" },
 ];
 
 const AdminHome = () => {
@@ -60,7 +61,7 @@ const AdminHome = () => {
 
   // Register tabs with context for navigation
   useEffect(() => {
-    const tabKeys = formTabs.map(t => t.key);
+    const tabKeys = formTabs.map(t => t.id);
     registerSectionTabs(tabKeys, activeFormTab, setActiveFormTab);
     return () => clearSectionTabs();
   }, [activeFormTab, registerSectionTabs, clearSectionTabs]);
@@ -81,11 +82,7 @@ const AdminHome = () => {
         });
 
         if (response.data) {
-          console.log("API Response social links:", {
-            youtube: response.data.youtube_link,
-            linkedin: response.data.linkedin_link,
-            facebook: response.data.facebook_link
-          });
+          console.log("[AdminHome] API Response - title:", response.data.title, "| description:", response.data.description?.substring(0, 50));
           // Build full URL for video if it exists (server returns relative path)
           let videoUrl = response.data.background_video || "";
           if (videoUrl && !videoUrl.startsWith("http")) {
@@ -382,9 +379,9 @@ const AdminHome = () => {
       }
 
       // Auto-advance to next section after successful save
-      const currentTabIndex = formTabs.findIndex(tab => tab.key === activeFormTab);
+      const currentTabIndex = formTabs.findIndex(tab => tab.id === activeFormTab);
       if (currentTabIndex < formTabs.length - 1) {
-        setActiveFormTab(formTabs[currentTabIndex + 1].key);
+        setActiveFormTab(formTabs[currentTabIndex + 1].id);
       } else {
         // On final tab, navigate to next admin section (Profile)
         navigate('/dashboard/profile');
@@ -452,11 +449,11 @@ const AdminHome = () => {
       <div className="flex gap-1 mb-5 p-1 rounded-md" style={{ backgroundColor: '#0f172a' }}>
         {formTabs.map((tab) => {
           const Icon = tab.icon;
-          const isActive = activeFormTab === tab.key;
+          const isActive = activeFormTab === tab.id;
           return (
             <button
-              key={tab.key}
-              onClick={() => setActiveFormTab(tab.key)}
+              key={tab.id}
+              onClick={() => setActiveFormTab(tab.id)}
               className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded text-sm font-medium transition-all duration-150"
               style={{
                 backgroundColor: isActive ? 'rgba(99, 102, 241, 0.15)' : 'transparent',

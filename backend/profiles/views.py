@@ -2324,14 +2324,19 @@ def check_onboarding_status(request):
 @permission_classes([permissions.IsAuthenticated])
 def upload_cv(request):
     """Upload CV, parse with AI, and auto-fill profile data"""
+    import logging
     from PyPDF2 import PdfReader
     from docx import Document
     from career.models import CareerEntry, Skill
     from education.models import EducationEntry
     from home.models import HomePageContent
+    from achievements.models import Award
     import json
 
+    logger = logging.getLogger('profiles')
+    logger.info("[CV Upload] Starting CV upload process...")
     user = request.user
+    logger.info(f"[CV Upload] User: {user.username}")
     profile, created = UserProfile.objects.get_or_create(user=user)
 
     cv_file = request.FILES.get('cv')
@@ -2369,6 +2374,7 @@ def upload_cv(request):
                     extracted_text += "\n"
 
         if not extracted_text.strip():
+            logger.error("[CV Upload] ERROR: Could not extract any text from CV")
             profile.onboarding_completed = True
             profile.save()
             return Response({
@@ -2376,6 +2382,11 @@ def upload_cv(request):
                 'message': 'CV uploaded but could not extract text',
                 'has_cv': True
             })
+
+        logger.info(f"[CV Upload] Extracted {len(extracted_text)} characters from CV")
+        # Safely print without emoji issues on Windows
+        safe_text = extracted_text[:500].encode('ascii', 'replace').decode('ascii')
+        logger.info(f"[CV Upload] First 500 chars: {safe_text}")
 
         # Use Claude to parse the CV
         parse_prompt = f"""Parse this resume/CV and extract ALL information.
@@ -2403,7 +2414,15 @@ Return a JSON object with this structure (use null for missing fields):
             "description": "Additional details"
         }}
     ],
-    "skills": ["skill1", "skill2", "skill3"]
+    "skills": ["skill1", "skill2", "skill3"],
+    "awards": [
+        {{
+            "title": "Award/Honor Name",
+            "organization": "Issuing Organization",
+            "year": "2022",
+            "description": "Details about the award"
+        }}
+    ]
 }}
 
 RESUME TEXT:
@@ -2423,6 +2442,13 @@ Return ONLY the JSON object, no explanation."""
             response_text = re.sub(r'\n?```$', '', response_text)
 
         parsed_data = json.loads(response_text)
+        logger.info("[CV Upload] Successfully parsed CV data:")
+        logger.info(f"[CV Upload]   Name: {parsed_data.get('name')}")
+        logger.info(f"[CV Upload]   Email: {parsed_data.get('email')}")
+        logger.info(f"[CV Upload]   Experience: {len(parsed_data.get('experience', []))} entries")
+        logger.info(f"[CV Upload]   Education: {len(parsed_data.get('education', []))} entries")
+        logger.info(f"[CV Upload]   Skills: {len(parsed_data.get('skills', []))} entries")
+        logger.info(f"[CV Upload]   Awards: {len(parsed_data.get('awards', []))} entries")
 
         # Auto-fill profile data
         if parsed_data.get('email'):
@@ -2444,12 +2470,18 @@ Return ONLY the JSON object, no explanation."""
             user.save()
 
         # Update home page with name and summary
-        home, _ = HomePageContent.objects.get_or_create(user=user)
+        home, created = HomePageContent.objects.get_or_create(user=user)
+        logger.info(f"[CV Upload] HomePageContent created: {created}")
         if parsed_data.get('name'):
             home.title = parsed_data['name']
+            logger.info(f"[CV Upload] Set home.title = {parsed_data['name']}")
         if parsed_data.get('summary'):
             home.description = parsed_data['summary']
+            # Safe log without emoji issues
+            safe_summary = parsed_data['summary'][:100].encode('ascii', 'replace').decode('ascii')
+            logger.info(f"[CV Upload] Set home.description = {safe_summary}...")
         home.save()
+        logger.info(f"[CV Upload] Home saved! ID: {home.id}, Title: {home.title}")
 
         # Import career/experience
         imported_careers = 0
@@ -2459,8 +2491,8 @@ Return ONLY the JSON object, no explanation."""
                     user=user,
                     title=exp['title'],
                     company=exp['company'],
-                    year=exp.get('year', ''),
-                    description=exp.get('description', '')
+                    year=exp.get('year') or '',
+                    description=exp.get('description') or ''
                 )
                 imported_careers += 1
 
@@ -2472,8 +2504,8 @@ Return ONLY the JSON object, no explanation."""
                     user=user,
                     degree=edu['degree'],
                     university=edu['university'],
-                    year=edu.get('year', ''),
-                    description=edu.get('description', '')
+                    year=edu.get('year') or '',
+                    description=edu.get('description') or ''
                 )
                 imported_education += 1
 
@@ -2481,17 +2513,34 @@ Return ONLY the JSON object, no explanation."""
         imported_skills = 0
         for skill_name in parsed_data.get('skills', []):
             if skill_name:
-                Skill.objects.get_or_create(user=user, name=skill_name, defaults={'proficiency': 3})
+                Skill.objects.get_or_create(user=user, name=skill_name, defaults={'proficiency': 70})
                 imported_skills += 1
+
+        # Import awards
+        imported_awards = 0
+        for award in parsed_data.get('awards', []):
+            if award.get('title'):
+                Award.objects.create(
+                    user=user,
+                    title=award['title'],
+                    organization=award.get('organization') or '',
+                    year=award.get('year') or '',
+                    description=award.get('description') or ''
+                )
+                imported_awards += 1
 
         return Response({
             'success': True,
-            'message': f'CV parsed! Imported: {imported_careers} jobs, {imported_education} education, {imported_skills} skills',
+            'message': f'CV parsed! Imported: {imported_careers} jobs, {imported_education} education, {imported_skills} skills, {imported_awards} awards',
             'has_cv': True,
             'parsed_data': parsed_data
         })
 
     except json.JSONDecodeError as e:
+        logger.error(f"[CV Upload] ERROR: JSON decode failed: {e}")
+        if 'response_text' in dir():
+            safe_resp = response_text[:500].encode('ascii', 'replace').decode('ascii')
+            logger.error(f"[CV Upload] Response text was: {safe_resp}")
         profile.onboarding_completed = True
         profile.save()
         return Response({
@@ -2501,6 +2550,9 @@ Return ONLY the JSON object, no explanation."""
             'error': str(e)
         })
     except Exception as e:
+        import traceback
+        logger.error(f"[CV Upload] ERROR: {type(e).__name__}: {e}")
+        logger.error(f"[CV Upload] Traceback: {traceback.format_exc()}")
         profile.onboarding_completed = True
         profile.save()
         return Response({
@@ -2528,29 +2580,42 @@ def skip_onboarding(request):
 @api_view(['POST'])
 @permission_classes([permissions.IsAuthenticated])
 def parse_cv_and_fill(request):
-    """Parse the CV already in profile and auto-fill profile, career, education, skills"""
+    """Parse the CV already in profile and auto-fill profile, career, education, skills, awards"""
+    import logging
     from PyPDF2 import PdfReader
     from docx import Document
     from career.models import CareerEntry, Skill
     from education.models import EducationEntry
     from home.models import HomePageContent
+    from achievements.models import Award
     import json
 
+    import sys
+    logger = logging.getLogger('profiles')
+
+    print("[Re-parse CV] Starting re-parse process...", file=sys.stderr)
+    print(f"[Re-parse CV] API Key present: {bool(CLAUDE_API_KEY)}", file=sys.stderr)
+    print(f"[Re-parse CV] API Key starts with: {CLAUDE_API_KEY[:20] if CLAUDE_API_KEY else 'EMPTY'}...", file=sys.stderr)
+
     user = request.user
+    print(f"[Re-parse CV] User: {user.username}", file=sys.stderr)
     profile = get_object_or_404(UserProfile, user=user)
 
     if not profile.cv or not profile.cv.name:
+        logger.error("[Re-parse CV] No CV found in profile")
         return Response({
             'success': False,
             'message': 'No CV uploaded. Please upload a CV first.'
         }, status=status.HTTP_400_BAD_REQUEST)
 
+    logger.info(f"[Re-parse CV] CV file: {profile.cv.name}")
     filename = profile.cv.name.lower()
     extracted_text = ""
 
     try:
         # Extract text
         if filename.endswith('.pdf'):
+            logger.info("[Re-parse CV] Reading PDF file...")
             reader = PdfReader(profile.cv.open('rb'))
             for page in reader.pages:
                 extracted_text += page.extract_text() + "\n"
@@ -2601,7 +2666,15 @@ Return a JSON object with this structure (use null for missing fields):
             "description": "Additional details"
         }}
     ],
-    "skills": ["skill1", "skill2", "skill3"]
+    "skills": ["skill1", "skill2", "skill3"],
+    "awards": [
+        {{
+            "title": "Award/Honor Name",
+            "organization": "Issuing Organization",
+            "year": "2022",
+            "description": "Details about the award"
+        }}
+    ]
 }}
 
 RESUME TEXT:
@@ -2656,8 +2729,8 @@ Return ONLY the JSON object, no explanation."""
                     user=user,
                     title=exp['title'],
                     company=exp['company'],
-                    year=exp.get('year', ''),
-                    description=exp.get('description', '')
+                    year=exp.get('year') or '',
+                    description=exp.get('description') or ''
                 )
                 imported_careers += 1
 
@@ -2669,8 +2742,8 @@ Return ONLY the JSON object, no explanation."""
                     user=user,
                     degree=edu['degree'],
                     university=edu['university'],
-                    year=edu.get('year', ''),
-                    description=edu.get('description', '')
+                    year=edu.get('year') or '',
+                    description=edu.get('description') or ''
                 )
                 imported_education += 1
 
@@ -2678,22 +2751,39 @@ Return ONLY the JSON object, no explanation."""
         imported_skills = 0
         for skill_name in parsed_data.get('skills', []):
             if skill_name:
-                Skill.objects.get_or_create(user=user, name=skill_name, defaults={'proficiency': 3})
+                Skill.objects.get_or_create(user=user, name=skill_name, defaults={'proficiency': 70})
                 imported_skills += 1
+
+        # Import awards
+        imported_awards = 0
+        for award in parsed_data.get('awards', []):
+            if award.get('title'):
+                Award.objects.create(
+                    user=user,
+                    title=award['title'],
+                    organization=award.get('organization') or '',
+                    year=award.get('year') or '',
+                    description=award.get('description') or ''
+                )
+                imported_awards += 1
 
         return Response({
             'success': True,
-            'message': f'Imported: {imported_careers} jobs, {imported_education} education, {imported_skills} skills',
+            'message': f'Imported: {imported_careers} jobs, {imported_education} education, {imported_skills} skills, {imported_awards} awards',
             'parsed_data': parsed_data
         })
 
     except json.JSONDecodeError as e:
+        print(f"[Re-parse CV] JSON decode error: {e}", file=sys.stderr)
         return Response({
             'success': False,
             'message': 'CV parsed but failed to extract structured data',
             'error': str(e)
         })
     except Exception as e:
+        import traceback
+        print(f"[Re-parse CV] ERROR: {type(e).__name__}: {e}", file=sys.stderr)
+        print(f"[Re-parse CV] Traceback: {traceback.format_exc()}", file=sys.stderr)
         return Response({
             'success': False,
             'message': 'Error parsing CV',

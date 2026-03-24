@@ -336,7 +336,17 @@ const BioSection = ({ isAdminPreview = false, isSidebar = false }) => {
 
   const bio = processBio(rawBio);
 
-  // Handle image URL - check various possible field names and formats
+  // ============================================================================
+  // CRITICAL FIX - DO NOT MODIFY WITHOUT UNDERSTANDING
+  // ============================================================================
+  // This function handles profile picture URLs for BOTH main domain and subdomains.
+  // Uses window.location.origin to work correctly on:
+  // - profile2connect.com (main domain)
+  // - *.profile2connect.com (user subdomains like raamamoorthy.profile2connect.com)
+  //
+  // DO NOT hardcode localhost or use environment variables that default to localhost!
+  // This has caused the profile picture to break multiple times in production.
+  // ============================================================================
   const getImageUrl = () => {
     if (isInAdminPreview && liveProfileData?.profile_picture_preview) {
       return liveProfileData.profile_picture_preview;
@@ -348,14 +358,18 @@ const BioSection = ({ isAdminPreview = false, isSidebar = false }) => {
       return 'https://ui-avatars.com/api/?name=' + encodeURIComponent(name) + '&background=6366f1&color=fff&size=256';
     }
 
-    // If it's already a full URL, use it directly
+    // If it's already a full URL or data URL, use it directly
     if (profilePic.startsWith('http://') || profilePic.startsWith('https://') || profilePic.startsWith('data:')) {
       return profilePic;
     }
 
-    // Otherwise, prepend the backend URL
-    return `http://localhost:8000${profilePic.startsWith('/') ? '' : '/'}${profilePic}`;
+    // For relative paths, use current origin (works on main domain AND subdomains)
+    const origin = window.location.origin;
+    return `${origin}${profilePic.startsWith('/') ? '' : '/'}${profilePic}`;
   };
+  // ============================================================================
+  // END CRITICAL FIX
+  // ============================================================================
 
   const image = getImageUrl();
 
@@ -473,7 +487,7 @@ const BioSection = ({ isAdminPreview = false, isSidebar = false }) => {
 
   // CENTERED LAYOUT
   const CenteredLayout = () => (
-    <div className="relative z-10 max-w-4xl mx-auto px-6 py-16 md:py-24 text-center">
+    <div className={`relative z-10 ${isAdminPreview ? 'w-full' : 'max-w-4xl mx-auto'} px-6 py-16 md:py-24 text-center`}>
       <motion.div initial={{ opacity: 0, y: -30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="flex justify-center mb-8">
         <ProfileImage size="normal" />
       </motion.div>
@@ -531,14 +545,14 @@ const BioSection = ({ isAdminPreview = false, isSidebar = false }) => {
 
   // MINIMAL LAYOUT
   const MinimalLayout = () => (
-    <div className="relative z-10 max-w-3xl mx-auto px-6 py-20 md:py-32">
+    <div className={`relative z-10 ${isAdminPreview ? 'w-full' : 'max-w-3xl mx-auto'} px-6 py-20 md:py-32`}>
       <div className="flex items-center gap-8 mb-8">
         <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.5 }}
           className="w-24 h-24 rounded-full overflow-hidden border-2" style={{ borderColor: styles.customAccent || '#6366f1' }}>
           <img src={image} alt={name} className="w-full h-full object-cover" onError={(e) => { e.target.onerror = null; e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=6366f1&color=fff&size=256`; }} />
         </motion.div>
         <div>
-          <motion.h1 initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }} className="text-3xl md:text-4xl font-bold" style={textPrimaryStyle}>{name}</motion.h1>
+          <motion.h1 initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }} className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold break-words" style={textPrimaryStyle}>{name}</motion.h1>
           <motion.p initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3 }} className="text-lg" style={{ color: styles.customAccent || '#8b5cf6' }}>{role}</motion.p>
         </div>
       </div>
@@ -555,7 +569,7 @@ const BioSection = ({ isAdminPreview = false, isSidebar = false }) => {
 
   // CREATIVE LAYOUT
   const CreativeLayout = () => (
-    <div className="relative z-10 max-w-6xl mx-auto px-6 py-16 md:py-24">
+    <div className={`relative z-10 ${isAdminPreview ? 'w-full' : 'max-w-6xl mx-auto'} px-6 py-16 md:py-24`}>
       <div className="grid lg:grid-cols-3 gap-8 items-center">
         <motion.div initial={{ opacity: 0, rotate: -5 }} animate={{ opacity: 1, rotate: 0 }} transition={{ duration: 0.6 }}
           className={`lg:col-span-1 ${styles.cardBg} border rounded-3xl p-8 text-center flex flex-col items-center justify-center`}>
@@ -581,7 +595,7 @@ const BioSection = ({ isAdminPreview = false, isSidebar = false }) => {
 
   // HORIZONTAL LAYOUT (Default) - Full layout with photo
   const HorizontalLayout = () => (
-    <div className="relative z-10 max-w-6xl mx-auto px-6 py-16 md:py-24">
+    <div className={`relative z-10 ${isAdminPreview ? 'w-full' : 'max-w-6xl mx-auto'} px-6 py-16 md:py-24`}>
       <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
         <motion.div initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6 }} className="order-2 lg:order-1">
           <StatusBadge />

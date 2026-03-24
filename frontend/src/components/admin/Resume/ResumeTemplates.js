@@ -136,6 +136,21 @@ export const SampleResumePreview = ({ templateId }) => {
           textColor: '#374151',
           subtextColor: '#6b7280'
         };
+      case 'developer-pro':
+        return {
+          headerBg: 'transparent',
+          headerText: '#ffffff',
+          sidebarBg: `linear-gradient(135deg, ${colors.secondary}, ${colors.primary})`,
+          mainBg: '#ffffff',
+          headingColor: colors.accent,
+          accentColor: colors.accent,
+          textColor: '#374151',
+          subtextColor: '#6b7280',
+          sidebarText: '#f8fafc',
+          sidebarSubtext: '#94a3b8',
+          skillBarBg: '#334155',
+          skillBarFill: `linear-gradient(90deg, ${colors.accent}, #8b5cf6)`
+        };
       default:
         return {
           headerBg: colors.primary,
@@ -152,6 +167,7 @@ export const SampleResumePreview = ({ templateId }) => {
 
   const styles = getTemplateStyles();
   const isDarkTheme = ['executive', 'midnight', 'tech'].includes(templateId);
+  const hasDarkSidebar = ['developer-pro'].includes(templateId);
 
   // Render Single Column Layout
   const renderSingleColumnLayout = () => (
@@ -530,6 +546,182 @@ export const SampleResumePreview = ({ templateId }) => {
     </div>
   );
 
+  // Render Sidebar Left Layout (dark sidebar with skill bars)
+  const renderSidebarLeftLayout = () => (
+    <div className="flex h-full">
+      {/* Dark Sidebar */}
+      <div
+        className="w-1/3 p-4"
+        style={{
+          background: styles.sidebarBg,
+          color: styles.sidebarText || '#f8fafc'
+        }}
+      >
+        {/* Profile Photo Placeholder */}
+        <div className="flex justify-center mb-4">
+          <div
+            className="w-16 h-16 rounded-full flex items-center justify-center text-xl font-bold"
+            style={{ background: `linear-gradient(135deg, ${colors.accent}, #8b5cf6)` }}
+          >
+            {data.name.split(' ').map(n => n[0]).join('')}
+          </div>
+        </div>
+
+        {/* Name & Title */}
+        <div className="text-center mb-4">
+          <h2 className="text-sm font-bold mb-0.5" style={{ color: '#f8fafc' }}>{data.name}</h2>
+          <p className="text-[10px]" style={{ color: styles.sidebarSubtext || '#94a3b8' }}>{data.title}</p>
+        </div>
+
+        {/* Contact */}
+        <div className="mb-4">
+          <h3
+            className="text-[10px] font-bold uppercase tracking-wider mb-2 pb-1"
+            style={{ color: colors.accent, borderBottom: `1px solid ${colors.accent}40` }}
+          >
+            Contact
+          </h3>
+          <div className="space-y-1.5 text-[9px]" style={{ color: styles.sidebarSubtext || '#94a3b8' }}>
+            <div className="flex items-center gap-2">
+              <span style={{ color: colors.accent }}>@</span>
+              <span>{data.email}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span style={{ color: colors.accent }}>#</span>
+              <span>{data.phone}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span style={{ color: colors.accent }}>O</span>
+              <span>{data.location}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Skills with Progress Bars */}
+        <div className="mb-4">
+          <h3
+            className="text-[10px] font-bold uppercase tracking-wider mb-2 pb-1"
+            style={{ color: colors.accent, borderBottom: `1px solid ${colors.accent}40` }}
+          >
+            Skills
+          </h3>
+          <div className="space-y-2">
+            {data.skills.slice(0, 6).map((skill, i) => {
+              const proficiency = 95 - (i * 5); // Simulate different proficiency levels
+              return (
+                <div key={i}>
+                  <div className="flex justify-between text-[9px] mb-0.5">
+                    <span style={{ color: '#f8fafc' }}>{skill}</span>
+                    <span style={{ color: styles.sidebarSubtext || '#94a3b8' }}>{proficiency}%</span>
+                  </div>
+                  <div className="h-1.5 rounded-full" style={{ backgroundColor: styles.skillBarBg || '#334155' }}>
+                    <div
+                      className="h-full rounded-full"
+                      style={{
+                        width: `${proficiency}%`,
+                        background: styles.skillBarFill || `linear-gradient(90deg, ${colors.accent}, #8b5cf6)`
+                      }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Education */}
+        <div>
+          <h3
+            className="text-[10px] font-bold uppercase tracking-wider mb-2 pb-1"
+            style={{ color: colors.accent, borderBottom: `1px solid ${colors.accent}40` }}
+          >
+            Education
+          </h3>
+          <div className="space-y-2">
+            {data.education.map((edu, i) => (
+              <div key={i}>
+                <p className="text-[10px] font-semibold" style={{ color: '#f8fafc' }}>{edu.degree}</p>
+                <p className="text-[9px]" style={{ color: styles.sidebarSubtext || '#94a3b8' }}>{edu.school}</p>
+                <p className="text-[8px]" style={{ color: styles.sidebarSubtext || '#64748b' }}>{edu.year}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="w-2/3 p-4" style={{ backgroundColor: '#ffffff' }}>
+        {/* Summary */}
+        <div className="mb-4">
+          <h3
+            className="text-xs font-bold uppercase tracking-wide mb-2 pb-1 border-b"
+            style={{ color: colors.accent, borderColor: colors.accent }}
+          >
+            Professional Summary
+          </h3>
+          <p className="text-[11px] leading-relaxed" style={{ color: '#374151' }}>
+            {data.summary}
+          </p>
+        </div>
+
+        {/* Experience */}
+        <div className="mb-4">
+          <h3
+            className="text-xs font-bold uppercase tracking-wide mb-2 pb-1 border-b"
+            style={{ color: colors.accent, borderColor: colors.accent }}
+          >
+            Work Experience
+          </h3>
+          <div className="space-y-3">
+            {data.experience.map((exp, i) => (
+              <div key={i} className="relative pl-4" style={{ borderLeft: `2px solid ${colors.accent}` }}>
+                <div
+                  className="absolute w-2 h-2 rounded-full -left-[5px] top-1"
+                  style={{ backgroundColor: colors.accent }}
+                />
+                <div className="flex justify-between items-start mb-1">
+                  <div>
+                    <p className="text-[11px] font-semibold" style={{ color: '#1e293b' }}>{exp.title}</p>
+                    <p className="text-[10px]" style={{ color: colors.accent }}>{exp.company}</p>
+                  </div>
+                  <span
+                    className="text-[9px] px-2 py-0.5 rounded"
+                    style={{ backgroundColor: '#f1f5f9', color: '#64748b' }}
+                  >
+                    {exp.period}
+                  </span>
+                </div>
+                <p className="text-[10px] leading-relaxed" style={{ color: '#64748b' }}>{exp.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Awards */}
+        <div>
+          <h3
+            className="text-xs font-bold uppercase tracking-wide mb-2 pb-1 border-b"
+            style={{ color: colors.accent, borderColor: colors.accent }}
+          >
+            Awards & Achievements
+          </h3>
+          <div className="grid grid-cols-2 gap-2">
+            {data.awards.map((award, i) => (
+              <div
+                key={i}
+                className="p-2 rounded"
+                style={{ backgroundColor: '#f8fafc', borderLeft: `3px solid ${colors.accent}` }}
+              >
+                <p className="text-[10px] font-semibold" style={{ color: '#1e293b' }}>{award.title}</p>
+                <p className="text-[9px]" style={{ color: '#64748b' }}>{award.org} - {award.year}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
   // Render content based on layout type
   const renderLayoutContent = () => {
     switch (layout) {
@@ -539,6 +731,8 @@ export const SampleResumePreview = ({ templateId }) => {
         return renderAcademicLayout();
       case 'header-focused':
         return renderHeaderFocusedLayout();
+      case 'sidebar-left':
+        return renderSidebarLeftLayout();
       case 'two-column':
       default:
         return renderTwoColumnLayout();
@@ -549,6 +743,7 @@ export const SampleResumePreview = ({ templateId }) => {
   const renderHeader = () => {
     if (layout === 'academic') return null; // Academic has its own header in content
     if (layout === 'header-focused') return null; // Header-focused has its own header in content
+    if (layout === 'sidebar-left') return null; // Sidebar-left has name in sidebar
 
     return (
       <div
@@ -1045,6 +1240,38 @@ export const resumeTemplates = [
         </div>
         <div className="h-1.5 bg-blue-800 rounded w-1/4 mb-1"></div>
         <div className="h-1 bg-gray-200 rounded w-full"></div>
+      </div>
+    ),
+  },
+  {
+    id: "developer-pro",
+    name: "Developer Pro",
+    tag: "developer",
+    layout: "sidebar-left",
+    colors: { primary: "#0f172a", secondary: "#1e293b", accent: "#6366f1", bg: "#f8fafc" },
+    preview: (
+      <div className="w-full h-full bg-white rounded overflow-hidden shadow-inner flex">
+        <div className="w-1/3 bg-gradient-to-b from-slate-800 to-slate-900 p-1">
+          <div className="h-5 w-5 bg-indigo-500/30 rounded-full mx-auto mb-1"></div>
+          <div className="h-1.5 bg-white/80 rounded w-3/4 mx-auto mb-0.5"></div>
+          <div className="h-1 bg-indigo-400/50 rounded w-1/2 mx-auto mb-2"></div>
+          <div className="h-1 bg-slate-600 rounded w-full mb-0.5"></div>
+          <div className="h-1 bg-slate-600 rounded w-full mb-0.5"></div>
+          <div className="h-1 bg-slate-600 rounded w-3/4 mb-2"></div>
+          <div className="h-0.5 bg-indigo-500 rounded w-full mb-1"></div>
+          <div className="h-1 bg-slate-700 rounded w-full mb-0.5"></div>
+          <div className="h-1 bg-slate-700 rounded w-2/3"></div>
+        </div>
+        <div className="w-2/3 p-1.5">
+          <div className="h-1.5 bg-indigo-500 rounded w-1/3 mb-1"></div>
+          <div className="h-1 bg-gray-200 rounded w-full mb-0.5"></div>
+          <div className="h-1 bg-gray-200 rounded w-full mb-2"></div>
+          <div className="h-1.5 bg-indigo-500 rounded w-1/4 mb-1"></div>
+          <div className="h-1 bg-gray-200 rounded w-full mb-0.5"></div>
+          <div className="h-1 bg-gray-200 rounded w-3/4 mb-2"></div>
+          <div className="h-1.5 bg-indigo-500 rounded w-1/4 mb-1"></div>
+          <div className="h-1 bg-gray-200 rounded w-full"></div>
+        </div>
       </div>
     ),
   },

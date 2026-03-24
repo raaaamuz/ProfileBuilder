@@ -7,14 +7,21 @@ import Settings from './Settings/Settings';
 import Home from '../Public/Home/Home';
 import Profile from '../Public/Profile/Profile';
 import Education from '../Public/Education/Education';
+import EducationByStyle from '../Public/Education/EducationByStyle';
 import Blog from '../Public/Blogs/Blog';
 import CareerTimeline from '../Public/Career/CareerTimeline';
+import CareerByStyle from '../Public/Career/CareerByStyle';
 import AwardsSection from '../Public/Profile/AwardsSection';
+import AwardsByStyle from '../Public/Profile/AwardsByStyle';
 
 import { Sparkles, Loader2, Check, Palette, Copy, ExternalLink, Globe, X, LayoutGrid, Edit2, Save } from 'lucide-react';
 import { SampleResumePreview, resumeTemplates as allResumeTemplates } from './Resume/ResumeTemplates';
 import BioSection from '../Public/Profile/BioSection';
+import ProfileByStyle from '../Public/Profile/ProfileByStyle';
 import SkillsSection from '../Public/Profile/SkillsSection';
+import SkillsByStyle from '../Public/Profile/SkillsByStyle';
+import ServicesSection from '../Public/Services/ServicesSection';
+import TestimonialsSection from '../Public/Testimonials/TestimonialsSection';
 import api from '../../services/api';
 
 // Publish Panel Component
@@ -908,6 +915,7 @@ const PreviewPanel = () => {
     liveEducationData,
     liveProfileDesign,
     liveAwardsDesign,
+    liveSkillsDesign,
     updateCareerDesign,
     updateEducationDesign,
     updateProfileDesign,
@@ -920,8 +928,12 @@ const PreviewPanel = () => {
     setProfileAiDesigns,
     awardsAiDesigns,
     setAwardsAiDesigns,
+    skillsAiDesigns,
+    setSkillsAiDesigns,
     isGeneratingDesigns,
     generateAiDesigns,
+    templateLoaded,
+    selectedTemplate,
     liveResumeTemplate,
     liveResumeHtml,
     liveResumeSections,
@@ -946,14 +958,18 @@ const PreviewPanel = () => {
       ? profileAiDesigns
       : activeSection === 'awards'
         ? awardsAiDesigns
-        : educationAiDesigns;
+        : activeSection === 'skills'
+          ? skillsAiDesigns
+          : educationAiDesigns;
   const currentLiveDesign = activeSection === 'career'
     ? liveCareerDesign
     : activeSection === 'profile'
       ? liveProfileDesign
       : activeSection === 'awards'
         ? liveAwardsDesign
-        : liveEducationDesign;
+        : activeSection === 'skills'
+          ? liveSkillsDesign
+          : liveEducationDesign;
 
   // Default designs for each section - Advanced modern designs like Replit
   const defaultCareerDesigns = [
@@ -995,8 +1011,24 @@ const PreviewPanel = () => {
     { id: 'sunset-glory', name: 'Sunset Glory', layoutType: 'grid', backgroundColor: '#1c1917', textColor: '#fef3c7', accentColor: '#fb923c', fontFamily: 'Poppins, sans-serif', cardStyle: 'elevated', borderRadius: 24, gradient: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)' }
   ];
 
-  // Initialize designs if empty
+  const defaultSkillsDesigns = [
+    { id: 'tech-neon', name: 'Tech Neon', layoutType: 'cards', backgroundColor: '#0a0a0f', textColor: '#ffffff', accentColor: '#22d3ee', fontFamily: 'JetBrains Mono, monospace', cardStyle: 'glassmorphism', borderRadius: 16, glowEffect: true },
+    { id: 'forest-green', name: 'Forest Green', layoutType: 'badges', backgroundColor: '#0f172a', textColor: '#f0fdf4', accentColor: '#22c55e', fontFamily: 'Inter, sans-serif', cardStyle: 'elevated', borderRadius: 20 },
+    { id: 'ocean-blue', name: 'Ocean Blue', layoutType: 'list', backgroundColor: '#0c4a6e', textColor: '#e0f2fe', accentColor: '#38bdf8', fontFamily: 'Space Grotesk, sans-serif', cardStyle: 'glassmorphism', borderRadius: 16 },
+    { id: 'purple-haze', name: 'Purple Haze', layoutType: 'circular', backgroundColor: '#1e1b4b', textColor: '#e0e7ff', accentColor: '#a78bfa', fontFamily: 'Poppins, sans-serif', cardStyle: 'glassmorphism', borderRadius: 24 },
+    { id: 'minimal-light', name: 'Minimal Light', layoutType: 'list', backgroundColor: '#ffffff', textColor: '#18181b', accentColor: '#6366f1', fontFamily: 'Inter, sans-serif', cardStyle: 'bordered', borderRadius: 12 },
+    { id: 'warm-sunset', name: 'Warm Sunset', layoutType: 'cards', backgroundColor: '#1c1917', textColor: '#fef3c7', accentColor: '#f97316', fontFamily: 'Poppins, sans-serif', cardStyle: 'elevated', borderRadius: 20 }
+  ];
+
+  // Initialize designs if empty (only if no template is selected and template loading is complete)
   React.useEffect(() => {
+    // Wait for template loading to complete before setting defaults
+    if (!templateLoaded) return;
+
+    // If user has a selected template, the designs are already set by PreviewContext
+    if (selectedTemplate) return;
+
+    // No template selected - use hardcoded defaults
     if (activeSection === 'career' && careerAiDesigns.length === 0) {
       setCareerAiDesigns(defaultCareerDesigns);
     }
@@ -1009,7 +1041,10 @@ const PreviewPanel = () => {
     if (activeSection === 'awards' && awardsAiDesigns.length === 0) {
       setAwardsAiDesigns(defaultAwardsDesigns);
     }
-  }, [activeSection, careerAiDesigns.length, educationAiDesigns.length, profileAiDesigns.length, awardsAiDesigns.length, setCareerAiDesigns, setEducationAiDesigns, setProfileAiDesigns, setAwardsAiDesigns]);
+    if (activeSection === 'skills' && skillsAiDesigns.length === 0) {
+      setSkillsAiDesigns(defaultSkillsDesigns);
+    }
+  }, [activeSection, templateLoaded, selectedTemplate, careerAiDesigns.length, educationAiDesigns.length, profileAiDesigns.length, awardsAiDesigns.length, skillsAiDesigns.length, setCareerAiDesigns, setEducationAiDesigns, setProfileAiDesigns, setAwardsAiDesigns, setSkillsAiDesigns]);
 
   // Sync selected design with live design
   React.useEffect(() => {
@@ -1076,7 +1111,8 @@ const PreviewPanel = () => {
   const handleGenerateDesigns = () => {
     const context = activeSection === 'career' ? 'career timeline' :
                     activeSection === 'profile' ? 'profile' :
-                    activeSection === 'awards' ? 'awards' : 'education';
+                    activeSection === 'awards' ? 'awards' :
+                    activeSection === 'skills' ? 'skills' : 'education';
     generateAiDesigns(context);
   };
 
@@ -1085,6 +1121,7 @@ const PreviewPanel = () => {
       if (activeSection === 'career') return defaultCareerDesigns;
       if (activeSection === 'profile') return defaultProfileDesigns;
       if (activeSection === 'awards') return defaultAwardsDesigns;
+      if (activeSection === 'skills') return defaultSkillsDesigns;
       return defaultEducationDesigns;
     };
     const designs = currentDesigns.length > 0 ? currentDesigns : getDefaultDesigns();
@@ -1100,24 +1137,29 @@ const PreviewPanel = () => {
                activeSection === 'awards' ? 'Awards Designs' : 'Design Templates'}
             </h3>
           </div>
-          <button
-            onClick={handleGenerateDesigns}
-            disabled={isGeneratingDesigns}
-            style={{
-              background: activeSection === 'career'
-                ? 'linear-gradient(to right, #f97316, #ef4444)'
-                : activeSection === 'profile'
-                  ? 'linear-gradient(to right, #ec4899, #f43f5e)'
-                  : activeSection === 'awards'
-                    ? 'linear-gradient(to right, #fbbf24, #f59e0b)'
-                    : 'linear-gradient(to right, #9333ea, #3b82f6)',
-              color: '#ffffff'
-            }}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg hover:opacity-90 transition-all disabled:opacity-50"
-          >
-            {isGeneratingDesigns ? <Loader2 className="animate-spin" size={14} /> : <Sparkles size={14} />}
-            {isGeneratingDesigns ? 'Generating...' : 'AI Generate'}
-          </button>
+          {/* Only show AI Generate button here if no template is selected */}
+          {!selectedTemplate && (
+            <button
+              onClick={handleGenerateDesigns}
+              disabled={isGeneratingDesigns}
+              style={{
+                background: activeSection === 'career'
+                  ? 'linear-gradient(to right, #f97316, #ef4444)'
+                  : activeSection === 'profile'
+                    ? 'linear-gradient(to right, #ec4899, #f43f5e)'
+                    : activeSection === 'awards'
+                      ? 'linear-gradient(to right, #fbbf24, #f59e0b)'
+                      : activeSection === 'skills'
+                        ? 'linear-gradient(to right, #22c55e, #10b981)'
+                        : 'linear-gradient(to right, #9333ea, #3b82f6)',
+                color: '#ffffff'
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg hover:opacity-90 transition-all disabled:opacity-50"
+            >
+              {isGeneratingDesigns ? <Loader2 className="animate-spin" size={14} /> : <Sparkles size={14} />}
+              {isGeneratingDesigns ? 'Generating...' : 'AI Generate'}
+            </button>
+          )}
         </div>
 
         <div className="grid grid-cols-3 gap-2">
@@ -1153,17 +1195,21 @@ const PreviewPanel = () => {
       case 'home':
         return <Home data={liveHomeData} />;
       case 'profile':
-        return <BioSection isAdminPreview={true} globalFont={liveHomeData?.customSettings?.fontFamily} />;
+        return <ProfileByStyle isAdminPreview={true} globalFont={liveHomeData?.customSettings?.fontFamily} />;
       case 'education':
-        return <Education liveDesignConfig={liveEducationDesign} liveEducationData={liveEducationData} globalFont={liveHomeData?.customSettings?.fontFamily} />;
+        return <EducationByStyle isAdminPreview={true} globalFont={liveHomeData?.customSettings?.fontFamily} />;
       case 'blogs':
         return <Blog isAdminPreview={true} />;
       case 'career':
-        return <CareerTimeline liveDesignConfig={liveCareerDesign} liveCareerData={liveCareerData} globalFont={liveHomeData?.customSettings?.fontFamily} />;
+        return <CareerByStyle liveDesignConfig={liveCareerDesign} liveCareerData={liveCareerData} globalFont={liveHomeData?.customSettings?.fontFamily} isAdminPreview={true} />;
       case 'skills':
-        return <SkillsSection isAdminPreview={true} globalFont={liveHomeData?.customSettings?.fontFamily} />;
+        return <SkillsByStyle isAdminPreview={true} globalFont={liveHomeData?.customSettings?.fontFamily} />;
+      case 'services':
+        return <ServicesSection isAdminPreview={true} />;
       case 'awards':
-        return <AwardsSection isAdminPreview={true} liveDesignConfig={liveAwardsDesign} globalFont={liveHomeData?.customSettings?.fontFamily} />;
+        return <AwardsByStyle isAdminPreview={true} globalFont={liveHomeData?.customSettings?.fontFamily} />;
+      case 'testimonials':
+        return <TestimonialsSection isAdminPreview={true} />;
       case 'resume':
         return <ResumePreview
           selectedTemplate={liveResumeTemplate}
@@ -1191,9 +1237,10 @@ const PreviewPanel = () => {
       style={{
         width: '100%',
         height: '100%',
-        padding: '16px',
         overflowY: 'auto',
         backgroundColor: '#ffffff',
+        display: 'flex',
+        flexDirection: 'column',
       }}
     >
       {/* Publish Panel - Show only on settings page */}
@@ -1202,10 +1249,39 @@ const PreviewPanel = () => {
       {/* Hide preview content for settings page */}
       {activeSection !== 'settings' && (
         <>
-          {/* Design Templates at top for career/education/profile/awards */}
-          {(activeSection === 'career' || activeSection === 'education' || activeSection === 'profile' || activeSection === 'awards') && renderDesignTemplates()}
+          {/* Show template info when template is selected, otherwise show design options */}
+          {(activeSection === 'career' || activeSection === 'education' || activeSection === 'profile' || activeSection === 'awards' || activeSection === 'skills') && (
+            <>
+              {/* Template info banner */}
+              {selectedTemplate && (
+                <div className="bg-slate-800 rounded-xl p-4 mb-4 border border-slate-600">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Palette size={20} className="text-purple-400" />
+                      <div>
+                        <p className="text-white font-medium">Using "{selectedTemplate.name}" template</p>
+                        <p className="text-slate-400 text-sm">Style: {selectedTemplate.style}</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={handleGenerateDesigns}
+                      disabled={isGeneratingDesigns}
+                      className="px-4 py-2 rounded-lg bg-gradient-to-r from-pink-500 to-orange-500 text-white text-sm font-semibold hover:from-pink-600 hover:to-orange-600 transition shadow-lg flex items-center gap-2 disabled:opacity-50"
+                    >
+                      <Sparkles size={16} />
+                      {isGeneratingDesigns ? 'Generating...' : 'AI Generate'}
+                    </button>
+                  </div>
+                </div>
+              )}
+              {/* Design grid - show when designs exist OR when no template is selected */}
+              {(currentDesigns.length > 0 || !selectedTemplate) && renderDesignTemplates()}
+            </>
+          )}
 
-          {renderPreview()}
+          <div style={{ width: '100%', minWidth: '100%', flex: '1 1 auto', alignSelf: 'stretch' }}>
+            {renderPreview()}
+          </div>
         </>
       )}
     </div>

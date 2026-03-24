@@ -12,7 +12,7 @@ const PersonalDetails = ({
     <div className="space-y-5">
       {/* Full Name Input */}
       <div>
-        <label htmlFor="title">Name</label>
+        <label htmlFor="title" className="text-gray-200">Name</label>
         <input
           id="title"
           type="text"
@@ -26,7 +26,7 @@ const PersonalDetails = ({
       {/* Description Textarea with AI Button */}
       <div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-          <label htmlFor="description" style={{ margin: 0 }}>Resume Objective</label>
+          <label htmlFor="description" className="text-gray-200" style={{ margin: 0 }}>Resume Objective</label>
           <button
             type="button"
             onClick={handleImproveDescription}

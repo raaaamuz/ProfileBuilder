@@ -5,7 +5,7 @@ import { faYoutube, faLinkedin, faFacebook, faTwitter } from '@fortawesome/free-
 import api from "../../../services/api";
 import { useUsername } from "../../../utils/subdomain";
 
-const Home = ({ data }) => {
+const Home = ({ data, onSectionChange, isVerticalSlider = false, hideInlineNav = true }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const username = useUsername();
@@ -195,6 +195,23 @@ const Home = ({ data }) => {
 
   const handleTabClick = (tab) => {
     setActiveTab(tab.name);
+
+    // If inside vertical slider, use callback to change section
+    if (isVerticalSlider && onSectionChange) {
+      const sectionMap = {
+        'Home': 'home',
+        'Profile': 'profile',
+        'Blog': 'blog',
+        'Stories': 'stories',
+        'Contact': 'contact',
+        'Education': 'education',
+        'Career': 'career',
+      };
+      const section = sectionMap[tab.name] || tab.name.toLowerCase();
+      onSectionChange(section);
+      return;
+    }
+
     // For public profiles, use /public/{section}/{username} format
     if (username) {
       // Map tab names to route segments
@@ -316,8 +333,8 @@ const Home = ({ data }) => {
   }
 
   return (
-    <div 
-      className="relative h-screen flex flex-col justify-center items-center text-center"
+    <div
+      className="relative h-screen w-full flex flex-col justify-center items-center text-center"
       style={{
         color: theme.textColor,
         backgroundColor: theme.backgroundColor,
@@ -346,8 +363,8 @@ const Home = ({ data }) => {
           {error || homeContent.description || "Bringing you the best experience."}
         </p>
 
-        {/* Navigation menu */}
-        {tabs.length > 0 && (
+        {/* Navigation menu - hidden when inside portfolio layouts */}
+        {!hideInlineNav && tabs.length > 0 && (
           <nav className="mt-8 w-full max-w-2xl mx-auto">
             <ul className="flex justify-between border-b-2 border-gray-600 pb-2">
               {tabs.map((tab) => (
@@ -355,8 +372,8 @@ const Home = ({ data }) => {
                   key={tab.name}
                   onClick={() => handleTabClick(tab)}
                   className={`w-full text-center cursor-pointer py-2 transition-all duration-300 ${
-                    activeTab === tab.name 
-                      ? "underline font-semibold text-orange-700" 
+                    activeTab === tab.name
+                      ? "underline font-semibold text-orange-700"
                       : "hover:underline hover:decoration-orange-600"
                   }`}
                 >

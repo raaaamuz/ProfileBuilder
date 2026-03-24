@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alex Richardson - Resume</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f5f5;
+        }
+
+        .resume {
+            max-width: 850px;
+            margin: 20px auto;
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: grid;
+            grid-template-columns: 280px 1fr;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            color: white;
+            padding: 40px 25px;
+        }
+
+        .profile-section {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .profile-photo {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            margin: 0 auto 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            font-weight: bold;
+        }
+
+        .name {
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .title {
+            font-size: 13px;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .sidebar-section {
+            margin-bottom: 25px;
+        }
+
+        .sidebar-section h3 {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #6366f1;
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #334155;
+        }
+
+        .contact-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            font-size: 13px;
+            color: #cbd5e1;
+        }
+
+        .contact-icon {
+            width: 16px;
+            text-align: center;
+            color: #6366f1;
+        }
+
+        .skill-item {
+            margin-bottom: 12px;
+        }
+
+        .skill-name {
+            font-size: 13px;
+            margin-bottom: 4px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .skill-bar {
+            height: 6px;
+            background: #334155;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .skill-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #6366f1, #8b5cf6);
+            border-radius: 3px;
+        }
+
+        /* Main Content */
+        .main-content {
+            padding: 40px 35px;
+        }
+
+        .main-section {
+            margin-bottom: 30px;
+        }
+
+        .main-section h2 {
+            font-size: 18px;
+            color: #1e293b;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #6366f1;
+            display: inline-block;
+        }
+
+        .summary {
+            color: #64748b;
+            font-size: 14px;
+            line-height: 1.7;
+        }
+
+        .experience-item, .education-item {
+            margin-bottom: 25px;
+            position: relative;
+            padding-left: 20px;
+        }
+
+        .experience-item::before, .education-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 8px;
+            width: 8px;
+            height: 8px;
+            background: #6366f1;
+            border-radius: 50%;
+        }
+
+        .experience-header, .education-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 8px;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+
+        .job-title, .degree {
+            font-size: 15px;
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .company, .university {
+            font-size: 14px;
+            color: #6366f1;
+            font-weight: 500;
+        }
+
+        .date {
+            font-size: 12px;
+            color: #94a3b8;
+            background: #f1f5f9;
+            padding: 3px 10px;
+            border-radius: 12px;
+        }
+
+        .description {
+            font-size: 13px;
+            color: #64748b;
+            line-height: 1.6;
+        }
+
+        .description ul {
+            margin-top: 8px;
+            padding-left: 18px;
+        }
+
+        .description li {
+            margin-bottom: 4px;
+        }
+
+        .awards-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .award-item {
+            background: #f8fafc;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 3px solid #6366f1;
+        }
+
+        .award-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 3px;
+        }
+
+        .award-org {
+            font-size: 12px;
+            color: #64748b;
+        }
+
+        @media print {
+            body { background: white; }
+            .resume { box-shadow: none; margin: 0; }
+        }
+    </style>
+</head>
+<body>
+    <div class="resume">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="profile-section">
+                <div class="profile-photo">AR</div>
+                <div class="name">Alex Richardson</div>
+                <div class="title">Senior Full-Stack Developer</div>
+            </div>
+
+            <div class="sidebar-section">
+                <h3>Contact</h3>
+                <div class="contact-item">
+                    <span class="contact-icon">@</span>
+                    <span>alex@richardson.dev</span>
+                </div>
+                <div class="contact-item">
+                    <span class="contact-icon">#</span>
+                    <span>+1 (555) 123-4567</span>
+                </div>
+                <div class="contact-item">
+                    <span class="contact-icon">O</span>
+                    <span>San Francisco, CA</span>
+                </div>
+                <div class="contact-item">
+                    <span class="contact-icon">in</span>
+                    <span>linkedin.com/in/alexrichardson</span>
+                </div>
+                <div class="contact-item">
+                    <span class="contact-icon">GH</span>
+                    <span>github.com/alexrichardson</span>
+                </div>
+            </div>
+
+            <div class="sidebar-section">
+                <h3>Skills</h3>
+                <div class="skill-item">
+                    <div class="skill-name"><span>React.js</span><span>95%</span></div>
+                    <div class="skill-bar"><div class="skill-fill" style="width: 95%"></div></div>
+                </div>
+                <div class="skill-item">
+                    <div class="skill-name"><span>Python/Django</span><span>93%</span></div>
+                    <div class="skill-bar"><div class="skill-fill" style="width: 93%"></div></div>
+                </div>
+                <div class="skill-item">
+                    <div class="skill-name"><span>TypeScript</span><span>90%</span></div>
+                    <div class="skill-bar"><div class="skill-fill" style="width: 90%"></div></div>
+                </div>
+                <div class="skill-item">
+                    <div class="skill-name"><span>Docker</span><span>90%</span></div>
+                    <div class="skill-bar"><div class="skill-fill" style="width: 90%"></div></div>
+                </div>
+                <div class="skill-item">
+                    <div class="skill-name"><span>Node.js</span><span>88%</span></div>
+                    <div class="skill-bar"><div class="skill-fill" style="width: 88%"></div></div>
+                </div>
+                <div class="skill-item">
+                    <div class="skill-name"><span>AWS</span><span>87%</span></div>
+                    <div class="skill-bar"><div class="skill-fill" style="width: 87%"></div></div>
+                </div>
+                <div class="skill-item">
+                    <div class="skill-name"><span>PostgreSQL</span><span>85%</span></div>
+                    <div class="skill-bar"><div class="skill-fill" style="width: 85%"></div></div>
+                </div>
+            </div>
+
+            <div class="sidebar-section">
+                <h3>Education</h3>
+                <div class="education-item" style="padding-left: 0;">
+                    <div class="degree" style="font-size: 13px;">M.S. Computer Science</div>
+                    <div class="university" style="font-size: 12px; color: #94a3b8;">Stanford University</div>
+                    <div class="date" style="background: transparent; padding: 0; font-size: 11px;">2014 - 2016</div>
+                </div>
+                <div class="education-item" style="padding-left: 0; margin-top: 15px;">
+                    <div class="degree" style="font-size: 13px;">B.S. Computer Science</div>
+                    <div class="university" style="font-size: 12px; color: #94a3b8;">UC Berkeley</div>
+                    <div class="date" style="background: transparent; padding: 0; font-size: 11px;">2010 - 2014</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="main-section">
+                <h2>Professional Summary</h2>
+                <p class="summary">
+                    Passionate full-stack developer with 8+ years of experience crafting scalable web applications
+                    and leading engineering teams. Specialized in React, Django, and cloud architecture with a
+                    proven track record of delivering high-impact products for startups and enterprises. Currently
+                    focused on AI-powered applications and helping businesses transform their digital presence.
+                </p>
+            </div>
+
+            <div class="main-section">
+                <h2>Experience</h2>
+
+                <div class="experience-item">
+                    <div class="experience-header">
+                        <div>
+                            <div class="job-title">Senior Full-Stack Developer & Tech Lead</div>
+                            <div class="company">TechVentures Inc.</div>
+                        </div>
+                        <span class="date">Mar 2021 - Present</span>
+                    </div>
+                    <div class="description">
+                        Leading a team of 6 engineers building a B2B SaaS platform serving 500+ enterprise clients.
+                        <ul>
+                            <li>Architected microservices infrastructure handling 10M+ daily API requests</li>
+                            <li>Reduced page load times by 60% through performance optimization</li>
+                            <li>Implemented CI/CD pipelines reducing deployment time from 2 hours to 15 minutes</li>
+                            <li>Mentored 4 junior developers, 2 promoted to mid-level within a year</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="experience-item">
+                    <div class="experience-header">
+                        <div>
+                            <div class="job-title">Full-Stack Developer</div>
+                            <div class="company">InnovateTech Solutions</div>
+                        </div>
+                        <span class="date">Jun 2018 - Feb 2021</span>
+                    </div>
+                    <div class="description">
+                        Built and maintained multiple client-facing web applications using React, Node.js, and PostgreSQL.
+                        <ul>
+                            <li>Developed real-time collaboration features used by 50,000+ daily active users</li>
+                            <li>Built payment processing system handling $2M+ monthly transactions</li>
+                            <li>Created automated testing suite achieving 90% code coverage</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="experience-item">
+                    <div class="experience-header">
+                        <div>
+                            <div class="job-title">Junior Software Engineer</div>
+                            <div class="company">StartupXYZ</div>
+                        </div>
+                        <span class="date">Jul 2016 - May 2018</span>
+                    </div>
+                    <div class="description">
+                        Early employee (#12) at a fast-growing fintech startup.
+                        <ul>
+                            <li>Built MVP that helped secure $5M Series A funding</li>
+                            <li>Developed RESTful APIs serving mobile and web applications</li>
+                            <li>Implemented OAuth 2.0 authentication system</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="main-section">
+                <h2>Awards & Achievements</h2>
+                <div class="awards-grid">
+                    <div class="award-item">
+                        <div class="award-title">Best Technical Innovation</div>
+                        <div class="award-org">TechVentures Inc. - 2023</div>
+                    </div>
+                    <div class="award-item">
+                        <div class="award-title">Employee of the Year</div>
+                        <div class="award-org">InnovateTech - 2020</div>
+                    </div>
+                    <div class="award-item">
+                        <div class="award-title">Hackathon Winner</div>
+                        <div class="award-org">Google DevConf - 2019</div>
+                    </div>
+                    <div class="award-item">
+                        <div class="award-title">Open Source Award</div>
+                        <div class="award-org">React Community - 2018</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

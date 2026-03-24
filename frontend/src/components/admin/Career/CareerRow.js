@@ -427,13 +427,13 @@ ${selectedText}
                   direction: "ltr",
                 }}
               />
-              <div className="mt-2 flex justify-end space-x-2">
+              <div className="mt-3 flex justify-end space-x-2">
                 <button
-                  className="flex items-center justify-center px-4 py-2 rounded text-sm font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex items-center justify-center px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90"
                   style={{
-                    backgroundColor: isLoading ? "#666" : "#4a4a4a",
-                    color: "#d4a853",
-                    border: "1px solid #d4a853"
+                    backgroundColor: isLoading ? "rgba(99, 102, 241, 0.5)" : "transparent",
+                    color: "#a5b4fc",
+                    border: "1px solid rgba(99, 102, 241, 0.5)"
                   }}
                   onClick={handleImproveDescription}
                   disabled={isLoading}
@@ -441,7 +441,7 @@ ${selectedText}
                 >
                   {isLoading ? (
                     <>
-                      <svg className="animate-spin h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24">
+                      <svg className="animate-spin h-3 w-3 mr-1.5" fill="none" viewBox="0 0 24 24">
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
                       </svg>
@@ -452,10 +452,10 @@ ${selectedText}
                   )}
                 </button>
                 <button
-                  className="flex items-center justify-center px-4 py-2 rounded text-sm font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex items-center justify-center px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90"
                   style={{
-                    backgroundColor: isLoading ? "#666" : "#d4a853",
-                    color: "#2d2d2d"
+                    backgroundColor: isLoading ? "rgba(99, 102, 241, 0.5)" : "#6366f1",
+                    color: "#ffffff"
                   }}
                   onClick={handleImproveSelectedDescription}
                   disabled={isLoading}
@@ -463,7 +463,7 @@ ${selectedText}
                 >
                   {isLoading ? (
                     <>
-                      <svg className="animate-spin h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24">
+                      <svg className="animate-spin h-3 w-3 mr-1.5" fill="none" viewBox="0 0 24 24">
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
                       </svg>

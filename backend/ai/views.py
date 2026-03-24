@@ -8,7 +8,8 @@ import google.generativeai as genai
 import logging
 
 # Configure Google Gemini API
-GOOGLE_API_KEY = "AIzaSyCNQ9vdZnYyKsyRW8SxpeS6alLNFQ372mw"
+import os
+GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY", "")
 genai.configure(api_key=GOOGLE_API_KEY)
 model = genai.GenerativeModel('gemini-2.5-flash-lite')
 
@@ -446,6 +447,7 @@ DESIGN_CONCEPTS = [
 LAYOUT_TYPES = {
     "education": ["cards", "timeline", "alternating", "journey", "floating", "grid", "list", "minimal"],
     "career": ["timeline", "cards", "stacked", "horizontal", "list", "grid", "minimal"],
+    "career timeline": ["timeline", "cards", "stacked", "horizontal", "list", "grid", "minimal"],
     "profile": ["horizontal", "centered", "split", "minimal", "creative", "cards"],
     "awards": ["cards", "grid", "list", "timeline", "showcase"],
     "general": ["cards", "grid", "list", "timeline", "stacked"],
@@ -463,16 +465,59 @@ def generate_designs(request):
     """
     Generate truly distinct design concepts - each with unique visual philosophy,
     not just color variations. Ensures proper color contrast for readability.
+    If a template_id is provided, designs are generated based on the template's style.
     """
+    from templates_design.models import DesignTemplate
+
     context = request.data.get("context", "general")
     count = request.data.get("count", 5)
+    template_id = request.data.get("template_id")
 
     # Get available layouts for this context
     available_layouts = LAYOUT_TYPES.get(context.lower(), LAYOUT_TYPES["general"])
 
+    # Check if user has a selected template
+    template_config = None
+    template_style = None
+    if template_id:
+        try:
+            template = DesignTemplate.objects.get(id=template_id)
+            template_style = template.style
+            # Map context to template section
+            section_map = {
+                "career timeline": "career",
+                "career": "career",
+                "education": "education",
+                "profile": "profile",
+                "awards": "awards",
+            }
+            section_key = section_map.get(context.lower(), "generic")
+            template_config = template.config.get(section_key, template.config.get("global", {}))
+            print(f"Using template '{template.name}' style '{template_style}' for context: {context}")
+        except DesignTemplate.DoesNotExist:
+            pass
+
     # Shuffle design concepts to get random selection
     shuffled_concepts = DESIGN_CONCEPTS.copy()
     random.shuffle(shuffled_concepts)
+
+    # If template is selected, prioritize concepts that match the template style
+    if template_style:
+        style_mapping = {
+            "minimal": ["minimal-lines", "monochrome", "paper-cutout"],
+            "dark": ["glassmorphism", "neon-glow", "retro-terminal", "ocean-depths"],
+            "glassmorphism": ["glassmorphism", "gradient-mesh", "neon-glow"],
+            "gradient": ["gradient-mesh", "duotone", "vibrant-cards"],
+            "colorful": ["vibrant-cards", "organic-shapes", "gradient-mesh"],
+            "professional": ["paper-cutout", "monochrome", "minimal-lines", "luxury-gold"],
+        }
+        preferred_concepts = style_mapping.get(template_style, [])
+
+        # Sort concepts: preferred ones first, then others
+        def concept_priority(c):
+            return 0 if c.get("conceptId") in preferred_concepts else 1
+
+        shuffled_concepts.sort(key=concept_priority)
 
     # Select unique concepts
     selected_concepts = shuffled_concepts[:count]
@@ -489,8 +534,29 @@ def generate_designs(request):
         # Assign unique ID
         design["id"] = f"{concept['conceptId']}-{random.randint(1000, 9999)}"
 
+        # If template config exists, merge template values as base
+        if template_config:
+            # Keep template's core colors but allow concept variations
+            if i == 0:
+                # First design: closest to template
+                design["backgroundColor"] = template_config.get("backgroundColor", design.get("backgroundColor"))
+                design["accentColor"] = template_config.get("accentColor", design.get("accentColor"))
+                design["fontFamily"] = template_config.get("fontFamily", design.get("fontFamily"))
+                design["borderRadius"] = template_config.get("borderRadius", design.get("borderRadius"))
+                design["cardStyle"] = template_config.get("cardStyle", "elevated")
+                design["name"] = f"Template Style"
+            else:
+                # Other designs: vary while keeping template's feel
+                # Optionally use template font or accent
+                if random.random() > 0.5:
+                    design["fontFamily"] = template_config.get("fontFamily", design.get("fontFamily"))
+
         # Try to use a unique layout for each design
         preferred_layout = concept.get("layoutType", "cards")
+        # If template specifies a layout, prefer it for first design
+        if template_config and i == 0 and template_config.get("layoutType"):
+            preferred_layout = template_config.get("layoutType")
+
         if preferred_layout in available_layouts and preferred_layout not in used_layouts:
             design["layoutType"] = preferred_layout
         else:
@@ -554,6 +620,7 @@ def import_from_cv(request):
     from profiles.models import UserProfile
     from education.models import EducationEntry
     from career.models import CareerEntry, Skill
+    from achievements.models import Award, Achievement
     from django.shortcuts import get_object_or_404
 
     user = request.user
@@ -630,10 +697,10 @@ Return ONLY the JSON array, no explanation or markdown. If no education found, r
                 if edu.get('degree') or edu.get('university'):
                     EducationEntry.objects.create(
                         user=user,
-                        degree=edu.get('degree', ''),
-                        university=edu.get('university', ''),
-                        year=edu.get('year', ''),
-                        description=edu.get('description', '')
+                        degree=edu.get('degree') or '',
+                        university=edu.get('university') or '',
+                        year=edu.get('year') or '',
+                        description=edu.get('description') or ''
                     )
                     imported_edu += 1
             result['imported']['education'] = imported_edu
@@ -669,10 +736,10 @@ Return ONLY the JSON array, no explanation or markdown. If no experience found, 
                 if exp.get('title') or exp.get('company'):
                     CareerEntry.objects.create(
                         user=user,
-                        title=exp.get('title', ''),
-                        company=exp.get('company', ''),
-                        year=exp.get('year', ''),
-                        description=exp.get('description', '')
+                        title=exp.get('title') or '',
+                        company=exp.get('company') or '',
+                        year=exp.get('year') or '',
+                        description=exp.get('description') or ''
                     )
                     imported_career += 1
             result['imported']['career'] = imported_career
@@ -702,6 +769,83 @@ Return ONLY the JSON array of strings, no explanation or markdown. If no skills 
                     Skill.objects.get_or_create(user=user, name=skill_name.strip())
                     imported_skills += 1
             result['imported']['skills'] = imported_skills
+
+        # Parse Awards
+        if section in ["awards", "all"]:
+            awards_prompt = f"""Parse this resume/CV and extract ONLY awards, honors, and recognitions.
+Return a JSON array with the following structure:
+
+[
+    {{
+        "title": "Award/Honor Name",
+        "organization": "Issuing Organization or Institution",
+        "year": "Year received (e.g., 2020)",
+        "description": "Brief description of the award"
+    }}
+]
+
+RESUME TEXT:
+{extracted_text[:8000]}
+
+Return ONLY the JSON array, no explanation or markdown. If no awards found, return an empty array []."""
+
+            response = model.generate_content(awards_prompt)
+            response_text = response.text.strip()
+            response_text = re.sub(r'^```(?:json)?\s*', '', response_text)
+            response_text = re.sub(r'\s*```$', '', response_text)
+
+            awards_data = json.loads(response_text)
+
+            imported_awards = 0
+            for award in awards_data:
+                if award.get('title'):
+                    Award.objects.create(
+                        user=user,
+                        title=award.get('title') or '',
+                        organization=award.get('organization') or '',
+                        year=award.get('year') or '',
+                        description=award.get('description') or ''
+                    )
+                    imported_awards += 1
+            result['imported']['awards'] = imported_awards
+
+        # Parse Achievements
+        if section in ["achievements", "all"]:
+            achievements_prompt = f"""Parse this resume/CV and extract ONLY achievements, accomplishments, and notable results (NOT awards/honors).
+Look for quantified accomplishments, project outcomes, certifications, publications, etc.
+Return a JSON array with the following structure:
+
+[
+    {{
+        "title": "Achievement Title or Summary",
+        "description": "Details of the achievement",
+        "year": "Year (if mentioned)"
+    }}
+]
+
+RESUME TEXT:
+{extracted_text[:8000]}
+
+Return ONLY the JSON array, no explanation or markdown. If no achievements found, return an empty array []."""
+
+            response = model.generate_content(achievements_prompt)
+            response_text = response.text.strip()
+            response_text = re.sub(r'^```(?:json)?\s*', '', response_text)
+            response_text = re.sub(r'\s*```$', '', response_text)
+
+            achievements_data = json.loads(response_text)
+
+            imported_achievements = 0
+            for achievement in achievements_data:
+                if achievement.get('title') or achievement.get('description'):
+                    Achievement.objects.create(
+                        user=user,
+                        title=achievement.get('title') or '',
+                        description=achievement.get('description') or '',
+                        year=achievement.get('year') or ''
+                    )
+                    imported_achievements += 1
+            result['imported']['achievements'] = imported_achievements
 
         total = sum(result['imported'].values())
         result['message'] = f'Successfully imported {total} items from your CV.'

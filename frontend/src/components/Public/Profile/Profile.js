@@ -14,6 +14,14 @@ import NotesSection from "./NotesSection";
 import api from "../../../services/api";
 import { getSubdomainUsername } from "../../../utils/subdomain";
 
+// Template-aware components for public profiles
+import { PublicTemplateProvider } from "../../../context/PublicTemplateContext";
+import PublicProfileByStyle from "./PublicProfileByStyle";
+import PublicCareerByStyle from "../Career/PublicCareerByStyle";
+import PublicEducationByStyle from "../Education/PublicEducationByStyle";
+import PublicSkillsByStyle from "./PublicSkillsByStyle";
+import PublicAwardsByStyle from "./PublicAwardsByStyle";
+
 // Function to compute default profile data dynamically.
 const getDefaultProfileData = (username) => {
   if (username) {
@@ -340,34 +348,35 @@ const Profile = () => {
   );
 
   return (
-    <div className="min-h-screen" style={{ fontFamily: globalFont }}>
-      {/* Bio Section - Full width, renders user's selected layout from admin */}
-      <BioSection globalFont={globalFont} />
+    <PublicTemplateProvider>
+      <div className="min-h-screen" style={{ fontFamily: globalFont }}>
+        {/* Profile Section - Uses template-aware component */}
+        <PublicProfileByStyle />
 
-      {/* Other sections scroll below */}
-      <div className="bg-gray-50">
-        {/* Notes Section - Highlighted notes from admin */}
-        <NotesSection notes={notes} globalFont={globalFont} />
-        {/* Render sections in saved order */}
-        {sectionOrder.map((sectionKey) => {
-          if (!sectionVisibility[sectionKey]) return null;
-          switch (sectionKey) {
-            case 'show_awards':
-              return <AwardsSection key={sectionKey} globalFont={globalFont} />;
-            case 'show_career':
-              return <CareerTimeline key={sectionKey} globalFont={globalFont} />;
-            case 'show_skills':
-              return <SkillsSection key={sectionKey} globalFont={globalFont} />;
-            case 'show_education':
-              return <Education key={sectionKey} globalFont={globalFont} />;
-            case 'show_achievements':
-              return null; // Add AchievementsSection component when available
-            default:
-              return null;
-          }
-        })}
-        <ContactSection />
-      </div>
+        {/* Other sections scroll below */}
+        <div className="bg-gray-50">
+          {/* Notes Section - Highlighted notes from admin */}
+          <NotesSection notes={notes} globalFont={globalFont} />
+          {/* Render sections in saved order - using template-aware components */}
+          {sectionOrder.map((sectionKey) => {
+            if (!sectionVisibility[sectionKey]) return null;
+            switch (sectionKey) {
+              case 'show_awards':
+                return <PublicAwardsByStyle key={sectionKey} />;
+              case 'show_career':
+                return <PublicCareerByStyle key={sectionKey} />;
+              case 'show_skills':
+                return <PublicSkillsByStyle key={sectionKey} />;
+              case 'show_education':
+                return <PublicEducationByStyle key={sectionKey} />;
+              case 'show_achievements':
+                return null; // Add AchievementsSection component when available
+              default:
+                return null;
+            }
+          })}
+          <ContactSection />
+        </div>
 
       {/* Footer Section */}
       <footer className="bg-gray-900 text-white py-12">
@@ -441,6 +450,7 @@ const Profile = () => {
         </div>
       </footer>
     </div>
+    </PublicTemplateProvider>
   );
 };
 

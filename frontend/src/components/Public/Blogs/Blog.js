@@ -65,8 +65,8 @@ const BlogList = ({ isAdminPreview = false }) => {
     // No data and no blog list
     if (!liveBlogData && (!liveBlogList || liveBlogList.length === 0)) {
       return (
-        <div>
-          <div className="max-w-5xl mx-auto p-6 text-center">
+        <div style={{ width: '100%' }}>
+          <div className={`${isAdminPreview ? 'w-full' : 'max-w-5xl mx-auto'} p-6 text-center`}>
             <div className="py-16">
               <div className="w-20 h-20 mx-auto mb-6 bg-gray-100 rounded-full flex items-center justify-center">
                 <svg className="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -84,8 +84,8 @@ const BlogList = ({ isAdminPreview = false }) => {
     // Show selected blog
     if (liveBlogData) {
       return (
-        <div>
-          <div className="max-w-5xl mx-auto p-6 space-y-8">
+        <div style={{ width: '100%' }}>
+          <div className={`${isAdminPreview ? 'w-full' : 'max-w-5xl mx-auto'} p-6 space-y-8`}>
             <div className="bg-gray-900 text-white rounded-lg overflow-hidden shadow-lg flex flex-col md:flex-row">
               {/* Left Column - Blog Content Preview */}
               <div className="p-8 md:w-2/3 flex flex-col justify-center">
@@ -131,8 +131,8 @@ const BlogList = ({ isAdminPreview = false }) => {
   // Loading state
   if (loading) {
     return (
-      <div>
-        <div className="max-w-5xl mx-auto p-6">
+      <div style={{ width: '100%' }}>
+        <div className={`${isAdminPreview ? 'w-full' : 'max-w-5xl mx-auto'} p-6`}>
           <p>Loading blogs...</p>
         </div>
       </div>
@@ -142,8 +142,8 @@ const BlogList = ({ isAdminPreview = false }) => {
   // Error state
   if (error) {
     return (
-      <div>
-        <div className="max-w-5xl mx-auto p-6 text-center">
+      <div style={{ width: '100%' }}>
+        <div className={`${isAdminPreview ? 'w-full' : 'max-w-5xl mx-auto'} p-6 text-center`}>
           <div className="py-16">
             <div className="w-20 h-20 mx-auto mb-6 bg-red-50 rounded-full flex items-center justify-center">
               <svg className="w-10 h-10 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -169,8 +169,8 @@ const BlogList = ({ isAdminPreview = false }) => {
   // Empty state
   if (!displayBlogs || displayBlogs.length === 0) {
     return (
-      <div>
-        <div className="max-w-5xl mx-auto p-6 text-center">
+      <div style={{ width: '100%' }}>
+        <div className={`${isAdminPreview ? 'w-full' : 'max-w-5xl mx-auto'} p-6 text-center`}>
           <div className="py-16">
             <div className="w-20 h-20 mx-auto mb-6 bg-gray-100 rounded-full flex items-center justify-center">
               <svg className="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -187,8 +187,8 @@ const BlogList = ({ isAdminPreview = false }) => {
 
   // Main blog list
   return (
-    <div>
-      <div className="max-w-5xl mx-auto p-6 space-y-8">
+    <div style={{ width: '100%' }}>
+      <div className={`${isAdminPreview ? 'w-full' : 'max-w-5xl mx-auto'} p-6 space-y-8`}>
         {displayBlogs.map((blog) => (
           <div
             key={blog.id}

@@ -16,6 +16,8 @@ urlpatterns = [
     path('api/public/', include('public_profile.urls')),
     path('api/achievements/', include('achievements.urls')),
     path('api/contact/', include('contact.urls')),
-
+    path('api/templates/', include('templates_design.urls')),
+    path('api/services/', include('services.urls')),
+    path('api/testimonials/', include('testimonials.urls')),
 ]
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -19,6 +19,8 @@ class HomePageContent(models.Model):
     linkedin_link = models.URLField(max_length=200, blank=True)
     facebook_link = models.URLField(max_length=200, blank=True)
     twitter_link = models.URLField(max_length=200, blank=True)
+    github_link = models.URLField(max_length=200, blank=True)
+    instagram_link = models.URLField(max_length=200, blank=True)
     is_published = models.BooleanField(default=False)
     
     # ✅ JSONField to store UI settings with a default fallback

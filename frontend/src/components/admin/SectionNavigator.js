@@ -4,7 +4,7 @@ import PreviewPanel from './PreviewPanel';
 import { PreviewContext } from './PreviewContext';
 import api from '../../services/api';
 import {
-  Home, User, GraduationCap, Briefcase, Wrench, FileText, Settings, LogOut, ScrollText, Trophy, ArrowRight, Mail
+  Home, User, GraduationCap, Briefcase, Wrench, FileText, Settings, ScrollText, Trophy, ArrowRight, Mail, UserCircle, Package, Quote
 } from 'lucide-react';
 
 // Professional Design System - Single accent color, clean typography
@@ -101,7 +101,9 @@ const SectionNavigator = () => {
     { key: 'education', label: 'Education', icon: GraduationCap },
     { key: 'career', label: 'Career', icon: Briefcase },
     { key: 'skills', label: 'Skills', icon: Wrench },
+    { key: 'services', label: 'Services', icon: Package },
     { key: 'awards', label: 'Awards', icon: Trophy },
+    { key: 'testimonials', label: 'Testimonials', icon: Quote },
     { key: 'resume', label: 'AI Resume', icon: ScrollText },
     { key: 'blogs', label: 'Blogs', icon: FileText },
     { key: 'settings', label: 'Settings', icon: Settings },
@@ -135,12 +137,6 @@ const SectionNavigator = () => {
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    setPreviewData({});
-    navigate('/login');
-  };
-
   const goToNextSection = () => {
     const movedToNextTab = goToNextTab();
     if (movedToNextTab) return;
@@ -165,7 +161,7 @@ const SectionNavigator = () => {
   const currentSectionInfo = sections[currentIndex] || sections[0];
 
   return (
-    <div className="flex h-screen overflow-hidden" style={{ backgroundColor: theme.bgPrimary }}>
+    <div className="flex h-screen w-full overflow-hidden" style={{ backgroundColor: theme.bgPrimary }}>
       {/* Sidebar - Clean minimal design */}
       <div
         className="w-16 flex flex-col items-center py-4 flex-shrink-0"
@@ -251,19 +247,28 @@ const SectionNavigator = () => {
           </button>
         )}
 
-        {/* Logout */}
+        {/* Account at bottom */}
         <button
-          onClick={handleLogout}
-          className="group relative w-10 h-10 flex items-center justify-center rounded-lg transition-colors hover:bg-red-500/10"
-          style={{ color: theme.textTertiary }}
-          title="Logout"
+          onClick={() => navigate('/dashboard/account')}
+          className="group relative w-10 h-10 flex items-center justify-center rounded-lg transition-all duration-150 mt-auto"
+          style={{
+            backgroundColor: currentSection === 'account' ? theme.accentMuted : 'transparent',
+            color: currentSection === 'account' ? theme.accent : theme.textTertiary,
+          }}
+          title="Account"
         >
-          <LogOut size={20} strokeWidth={1.5} />
+          <UserCircle size={20} strokeWidth={currentSection === 'account' ? 2 : 1.5} />
+          {currentSection === 'account' && (
+            <span
+              className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-6 rounded-r-full"
+              style={{ backgroundColor: theme.accent, marginLeft: '-1px' }}
+            />
+          )}
           <span
             className="absolute left-full ml-3 px-3 py-1.5 text-xs font-medium rounded-md opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50 pointer-events-none"
-            style={{ backgroundColor: theme.bgSecondary, color: theme.error, border: `1px solid ${theme.border}` }}
+            style={{ backgroundColor: theme.bgSecondary, color: theme.textPrimary, border: `1px solid ${theme.border}` }}
           >
-            Logout
+            Account
           </span>
         </button>
       </div>
@@ -372,7 +377,7 @@ const SectionNavigator = () => {
           </div>
 
           {/* Preview Content */}
-          <div className="flex-1 overflow-y-auto p-5">
+          <div className="flex-1 overflow-y-auto p-4">
             <div
               className="rounded-xl overflow-hidden"
               style={{

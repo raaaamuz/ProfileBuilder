@@ -53,7 +53,7 @@ const HIGHLIGHT_STYLES = {
   },
 };
 
-const NotesSection = ({ notes = [], section = null }) => {
+const NotesSection = ({ notes = [], section = null, isAdminPreview = false }) => {
   // Filter notes by section if specified, otherwise show all
   const filteredNotes = section
     ? notes.filter(note => note.section === section || note.section === 'general')
@@ -65,7 +65,7 @@ const NotesSection = ({ notes = [], section = null }) => {
 
   return (
     <div className="py-8">
-      <div className="max-w-6xl mx-auto px-6">
+      <div className={`${isAdminPreview ? 'w-full' : 'max-w-6xl mx-auto'} px-6`}>
         {/* Section Header - only show for general notes display */}
         {!section && (
           <motion.div
